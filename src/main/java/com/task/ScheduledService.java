@@ -24,7 +24,7 @@ public class ScheduledService {
     @Autowired
     private RemindMapper remindMapper;
 
-    @Scheduled( cron = "0 28 18 * * *" )
+    @Scheduled( cron = "0 10 18 * * *" )
     public void scheduled() {
         //在这里发送消息
         List<Remind> allReminds = remindMapper.findAllReminds();
