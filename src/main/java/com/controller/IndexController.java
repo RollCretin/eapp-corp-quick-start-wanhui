@@ -572,12 +572,14 @@ public class IndexController {
             dataArray[i] = dataModel;
         }
 
-        //每次只能获取到7条数据
+        //每次只能获取到7天数据
         int times = lastDay / 7 + (lastDay % 7 == 0 ? 0 : 1);
         DingTalkClient client = new DefaultDingTalkClient("https://oapi.dingtalk.com/attendance/list");
         for ( int i = 0; i < times; i++ ) {
             getData(year, month, lastDay, i, 0, userId, accessToken, client, dataArray);
         }
+
+        DateBean dates = DateConfig.getDates(year + "" + (month < 10 ? "0" + month : month));
 
         //对数据进行统计
         for ( DataModel dataModel : dataArray ) {
@@ -661,6 +663,34 @@ public class IndexController {
                 }
                 dataModel.setSteps(steps);
                 dataModel.setMills(allTime);
+            } else {
+                //今日没有打卡信息
+                //判断当日否是工作日以及今天以及今天以前的日期 是的话需要添加一些默认数据
+                DateTime aim = new DateTime(dataModel.getStartTime());
+                if ( dates.isInWork(aim.getDayOfMonth()) ) {
+                    DateTime t = new DateTime(today.getYear(), today.getMonthOfYear(), today.getDayOfMonth(), 4, 0, 0);
+                    //时间大于指定时间返回 1 时间小于指定时间返回-1 相等返回0
+                    if ( t.compareTo(aim) != -1 ) {
+                        List<DataModel.DingModel> lists = new ArrayList<>();
+                        DataModel.DingModel dingModel = new DataModel.DingModel();
+                        dingModel.setTime(0);
+                        dingModel.setType("OnDuty");
+                        DataModel.DingModel dingModel1 = new DataModel.DingModel();
+                        dingModel1.setTime(0);
+                        dingModel1.setType("OffDuty");
+                        lists.add(dingModel);
+                        lists.add(dingModel1);
+                        dataModel.setList(lists);
+
+                        List<UserMainInfoModel.DingModel> steps = new ArrayList<>();
+                        steps.add(new UserMainInfoModel.DingModel(0, 0,
+                                "今日无上班打卡信息"));
+                        steps.add(new UserMainInfoModel.DingModel(0, 1,
+                                "今日无下班打卡信息"));
+                        dataModel.setSteps(steps);
+                        dataModel.setMills(0);
+                    }
+                }
             }
         }
         return wholeMothTime;

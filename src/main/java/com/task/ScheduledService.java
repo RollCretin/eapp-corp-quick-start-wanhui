@@ -24,7 +24,7 @@ public class ScheduledService {
     @Autowired
     private RemindMapper remindMapper;
 
-    @Scheduled( cron = "0 10 18 * * *" )
+    @Scheduled( cron = "0 28 18 * * *" )
     public void scheduled() {
         //在这里发送消息
         List<Remind> allReminds = remindMapper.findAllReminds();
@@ -49,7 +49,7 @@ public class ScheduledService {
                 StringBuilder builder = new StringBuilder();
                 String userIds = "";
                 for ( int j = 0; j < allReminds.size() % 20; j++ ) {
-                    builder.append(allReminds.get((times - 1) * 20 + j).getUserId() + ",");
+                    builder.append(allReminds.get(i * 20 + j).getUserId() + ",");
                 }
                 if ( !builder.toString().equals("") ) {
                     userIds = builder.substring(0, builder.length() - 1);
@@ -60,7 +60,7 @@ public class ScheduledService {
                 StringBuilder builder = new StringBuilder();
                 String userIds = "";
                 for ( int j = 0; j < 20; j++ ) {
-                    builder.append(allReminds.get((times - 1) * 20 + j).getUserId() + ",");
+                    builder.append(allReminds.get(i * 20 + j).getUserId() + ",");
                 }
                 if ( !builder.toString().equals("") ) {
                     userIds = builder.substring(0, builder.length() - 1);

@@ -144,4 +144,17 @@ public class DateBean {
         }
         return false;
     }
+
+    /**
+     * 判断指定日期是否是工作日
+     *
+     * @param day
+     * @return
+     */
+    public boolean isInWork(int day) {
+        if ( month.contains(new MonthBean(day + "")) ) {
+            return true;
+        }
+        return false;
+    }
 }
