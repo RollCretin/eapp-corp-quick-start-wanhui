@@ -50,6 +50,16 @@ public class UserMainInfoModel {
     private int isTodayError;
     //是否开启了自动提醒功能
     private boolean isOpenRemind;
+    //本月打卡异常日期 与系统匹配的
+    private String monthErrDays;
+
+    public String getMonthErrDays() {
+        return monthErrDays;
+    }
+
+    public void setMonthErrDays(String monthErrDays) {
+        this.monthErrDays = monthErrDays;
+    }
 
     public boolean isOpenRemind() {
         return isOpenRemind;

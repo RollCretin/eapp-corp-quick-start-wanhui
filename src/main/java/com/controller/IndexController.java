@@ -15,12 +15,15 @@ import com.dingtalk.api.response.OapiAttendanceListResponse;
 import com.dingtalk.api.response.OapiUserGetResponse;
 import com.dingtalk.api.response.OapiUserGetuserinfoResponse;
 import com.mapper.LogMapper;
+import com.mapper.MonthTimeMapper;
 import com.mapper.RemindMapper;
 import com.mapper.UserConfigMapper;
 import com.mapper.UserMapper;
 import com.model.DataModel;
+import com.model.InitInfoModel;
 import com.model.UserDetailsModel;
 import com.model.UserMainInfoModel;
+import com.model.domain.MonthTime;
 import com.model.domain.Remind;
 import com.model.domain.User;
 import com.model.domain.UserConfig;
@@ -35,6 +38,7 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -67,6 +71,9 @@ public class IndexController {
     private UserConfigMapper userConfigMapper;
 
     @Autowired
+    private MonthTimeMapper monthTimeMapper;
+
+    @Autowired
     private LogMapper logMapper;
 
     @Autowired
@@ -90,9 +97,9 @@ public class IndexController {
     public ServiceResult getMainData(@RequestParam( value = "authCode" ) String requestAuthCode, HttpServletRequest servletRequest) {
         //获取accessToken,注意正是代码要有异常流处理
         String accessToken = AccessTokenUtil.getToken();
-        System.out.println("authCode   " + requestAuthCode);
 
         String userId = getUserId(accessToken, servletRequest, requestAuthCode);
+        System.out.println("authCode：" + requestAuthCode+"  userId："+userId);
 
         DateTime now = DateTime.now();
 
@@ -118,8 +125,36 @@ public class IndexController {
         if ( userById == null )
             userMapper.insert(userId, userName.getName(), userName.getAvatar(), kaoqinzu);
 
-        log(0, userId);
-
+        int userType = 0;
+        //固定班制  交易班制  弹性考勤
+        if ( "固定班制".equals(kaoqinzu) ) {
+            userType = 0;
+        } else if ( "弹性考勤".equals(kaoqinzu) ) {
+            userType = 1;
+        } else if ( "交易班制".equals(kaoqinzu) ) {
+            userType = 2;
+        }
+        long allTime = dakaInfo.getAllDingTime() + (dakaInfo.getIsTodayError() == 1 ? 0 : dakaInfo.getTodayTime());
+        //已考勤天数 包含今天
+        int clockinDays = dakaInfo.getAllClockingInDays() - dakaInfo.getLeftClockingInDays() + (dakaInfo.getIsTodayError() == 1 ? 0 : 1);
+        //真正参与考勤的天数
+        int joindDays = clockinDays - dakaInfo.getDingErrorDays();
+        int status = 0;
+        long dailyTime;
+        if ( joindDays == 0 ) {
+            dailyTime = 0;
+        } else {
+            dailyTime = allTime / joindDays;
+        }
+        if ( dailyTime > 8 * 3600 * 1000l ) {
+            status = 1;
+        } else {
+            status = 0;
+        }
+        dataBackup(userId, now.getYear(), now.getMonthOfYear(), userType,
+                TimeUtils.formatTimeToString(allTime), TimeUtils.formatTimeToString(dailyTime),
+                dakaInfo.getDingErrorDays(),
+                status, clockinDays, dakaInfo.getMonthErrDays());
         ServiceResult serviceResult = ServiceResult.success(dakaInfo);
 
         return serviceResult;
@@ -375,7 +410,9 @@ public class IndexController {
         dataArray = new DataModel[lastDay];
 
         //初始化数据
-        long wholeMothTime = initInfo(year, month, lastDay, userMainInfoModel, userId, accessToken, today, dataArray, userByUserId);
+        InitInfoModel initInfoModel = initInfo(year, month, lastDay, userMainInfoModel, userId, accessToken, today, dataArray, userByUserId);
+        long wholeMothTime = initInfoModel.getAllTime();
+        userMainInfoModel.setMonthErrDays(initInfoModel.getErrDays());
 
         //计算总时长 这个是不包含异常天数数据的
         userMainInfoModel.setAllDingTime(wholeMothTime);
@@ -465,7 +502,8 @@ public class IndexController {
         dataArray = new DataModel[lastDay];
 
         //初始化数据
-        long wholeMothTime = initInfo(year, month, lastDay, null, userId, accessToken, today, dataArray, userConfigs);
+        InitInfoModel initInfoModel = initInfo(year, month, lastDay, null, userId, accessToken, today, dataArray, userConfigs);
+        long wholeMothTime = initInfoModel.getAllTime();
 
         //计算总时长
         userDetailsModel.setAllDingTime(wholeMothTime);
@@ -557,7 +595,9 @@ public class IndexController {
      * @param today
      * @param userConfigs
      */
-    private long initInfo(int year, int month, int lastDay, UserMainInfoModel userMainInfoModel, String userId, String accessToken, DateTime today, DataModel[] dataArray, List<UserConfig> userConfigs) {
+    private InitInfoModel initInfo(int year, int month, int lastDay, UserMainInfoModel userMainInfoModel, String userId, String accessToken, DateTime today, DataModel[] dataArray, List<UserConfig> userConfigs) {
+        InitInfoModel initInfoModel = new InitInfoModel();
+        StringBuilder errDays = new StringBuilder();
         long wholeMothTime = 0;
         //遍历给数组添加数据
         for ( int i = 0; i < dataArray.length; i++ ) {
@@ -663,6 +703,9 @@ public class IndexController {
                 }
                 dataModel.setSteps(steps);
                 dataModel.setMills(allTime);
+                if ( allTime == 0 ) {
+                    errDays.append(new DateTime(dataModel.getStartTime()).toString("yyyy/MM/dd") + ",");
+                }
             } else {
                 //今日没有打卡信息
                 //判断当日否是工作日以及今天以及今天以前的日期 是的话需要添加一些默认数据
@@ -689,11 +732,16 @@ public class IndexController {
                                 "今日无下班打卡信息"));
                         dataModel.setSteps(steps);
                         dataModel.setMills(0);
+                        errDays.append(aim.toString("yyyy/MM/dd") + ",");
                     }
                 }
             }
         }
-        return wholeMothTime;
+        initInfoModel.setAllTime(wholeMothTime);
+        if ( errDays.toString() != null && !errDays.toString().equals("") ) {
+            initInfoModel.setErrDays(errDays.subSequence(0, errDays.length() - 1).toString());
+        }
+        return initInfoModel;
     }
 
     /**
@@ -722,6 +770,22 @@ public class IndexController {
     //跟踪记录 0 首页 1 统计详情
     private void log(int type, String user_id) {
         logMapper.insert(user_id, type);
+    }
+
+    @Async( "processExecutor" )
+    public void dataBackup(String userId, int year, int month, int user_type, String all_time, String daily_time, int err_day, int status, int clockin_day, String monthErrDays) {
+        //log记录
+        log(0, userId);
+
+        //统计用户打卡信息
+        MonthTime monthTimeComfig = monthTimeMapper.findMonthTimeComfig(userId, year, month, user_type);
+        if ( monthTimeComfig == null ) {
+            //之前没有数据
+            monthTimeMapper.insert(userId, month, year, all_time, daily_time, err_day, user_type, status, clockin_day, monthErrDays);
+        } else {
+            //之前有 更新
+            monthTimeMapper.update(monthTimeComfig.getId(), userId, month, year, all_time, daily_time, err_day, user_type, status, clockin_day, monthErrDays);
+        }
     }
 }
 
