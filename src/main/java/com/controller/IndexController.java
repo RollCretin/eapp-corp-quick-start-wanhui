@@ -99,7 +99,7 @@ public class IndexController {
         String accessToken = AccessTokenUtil.getToken();
 
         String userId = getUserId(accessToken, servletRequest, requestAuthCode);
-        System.out.println("authCode：" + requestAuthCode+"  userId："+userId);
+        System.out.println("authCode：" + requestAuthCode + "  userId：" + userId);
 
         DateTime now = DateTime.now();
 
@@ -135,8 +135,12 @@ public class IndexController {
             userType = 2;
         }
         long allTime = dakaInfo.getAllDingTime() + (dakaInfo.getIsTodayError() == 1 ? 0 : dakaInfo.getTodayTime());
+        DateBean dates = DateConfig.getDates(now.getYear() + "" + (now.getMonthOfYear() < 10 ? "0" + now.getMonthOfYear() : now.getMonthOfYear()));
         //已考勤天数 包含今天
-        int clockinDays = dakaInfo.getAllClockingInDays() - dakaInfo.getLeftClockingInDays() + (dakaInfo.getIsTodayError() == 1 ? 0 : 1);
+        int clockinDays = dakaInfo.getAllClockingInDays() - dakaInfo.getLeftClockingInDays();
+        if ( dates.isTodayInWork() ) {
+            clockinDays = clockinDays + (dakaInfo.getIsTodayError() == 1 ? 0 : 1);
+        }
         //真正参与考勤的天数
         int joindDays = clockinDays - dakaInfo.getDingErrorDays();
         int status = 0;
@@ -146,10 +150,12 @@ public class IndexController {
         } else {
             dailyTime = allTime / joindDays;
         }
-        if ( dailyTime > 8 * 3600 * 1000l ) {
-            status = 1;
-        } else {
+        if ( dailyTime >= 8 * 3600 * 1000l ) {
+            //正常
             status = 0;
+        } else {
+            //异常
+            status = 1;
         }
         dataBackup(userId, now.getYear(), now.getMonthOfYear(), userType,
                 TimeUtils.formatTimeToString(allTime), TimeUtils.formatTimeToString(dailyTime),
@@ -738,7 +744,7 @@ public class IndexController {
             }
         }
         initInfoModel.setAllTime(wholeMothTime);
-        if ( errDays.toString() != null && !errDays.toString().equals("") ) {
+        if ( errDays.toString() != null && !errDays.toString().equals("") && !errDays.toString().equals("0,")) {
             initInfoModel.setErrDays(errDays.subSequence(0, errDays.length() - 1).toString());
         }
         return initInfoModel;
