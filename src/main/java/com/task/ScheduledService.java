@@ -30,7 +30,8 @@ public class ScheduledService {
     @Autowired
     private MonthTimeMapper monthTimeMapper;
 
-    @Scheduled( cron = "0 10 18 * * *" )
+    //针对晚上18：30下班的人
+    @Scheduled( cron = "0 30 18 * * *" )
     public void scheduled() {
         //在这里发送消息
         List<Remind> allReminds = remindMapper.findAllReminds();
@@ -76,19 +77,19 @@ public class ScheduledService {
         }
     }
 
-    @Scheduled( cron = "0 30 18 * * FRI" )
-    public void scheduledTime() {
-        DateTime now = DateTime.now();
-        String yearMonth = now.getYear() + (now.getMonthOfYear() < 10 ? ("0" + now.getMonthOfYear()) : (now.getMonthOfYear() + ""));
-        DateBean dates = DateConfig.getDates(yearMonth);
-        if ( !dates.isTodayInWork() ) {
-            return;
-        }
-        List<MonthTime> monthTimeComfigs = monthTimeMapper.findAllMonthTimeComfig(now.getYear(), now.getMonthOfYear());
-        if ( monthTimeComfigs == null || monthTimeComfigs.isEmpty() )
-            return;
-        sendBackMsg(monthTimeComfigs);
-    }
+//    @Scheduled( cron = "0 30 18 * * FRI" )
+//    public void scheduledTime() {
+//        DateTime now = DateTime.now();
+//        String yearMonth = now.getYear() + (now.getMonthOfYear() < 10 ? ("0" + now.getMonthOfYear()) : (now.getMonthOfYear() + ""));
+//        DateBean dates = DateConfig.getDates(yearMonth);
+//        if ( !dates.isTodayInWork() ) {
+//            return;
+//        }
+//        List<MonthTime> monthTimeComfigs = monthTimeMapper.findAllMonthTimeComfig(now.getYear(), now.getMonthOfYear());
+//        if ( monthTimeComfigs == null || monthTimeComfigs.isEmpty() )
+//            return;
+//        sendBackMsg(monthTimeComfigs);
+//    }
 
     @Async( "processExecutor" )
     public void sendBackMsg(List<MonthTime> monthTimeComfigs) {

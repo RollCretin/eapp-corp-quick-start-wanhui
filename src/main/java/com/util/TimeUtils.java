@@ -18,7 +18,7 @@ public class TimeUtils {
                 + s.split(":")[2]+"秒";
     }
 
-    private static String formatInt(int num) {
+    public static String formatInt(int num) {
         return num < 10 ? ("0" + num) : num + "";
     }
 }

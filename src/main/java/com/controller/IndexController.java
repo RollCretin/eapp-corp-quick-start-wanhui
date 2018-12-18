@@ -32,7 +32,6 @@ import com.taobao.api.ApiException;
 import com.util.AccessTokenUtil;
 import com.util.ServiceResult;
 import com.util.TimeUtils;
-
 import org.joda.time.DateMidnight;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -44,13 +43,11 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
@@ -98,7 +95,7 @@ public class IndexController {
         //获取accessToken,注意正是代码要有异常流处理
         String accessToken = AccessTokenUtil.getToken();
 
-        String userId = getUserId(accessToken, servletRequest, requestAuthCode);
+        String userId = AccessTokenUtil.getUserId(accessToken, servletRequest, requestAuthCode);
         System.out.println("authCode：" + requestAuthCode + "  userId：" + userId);
 
         DateTime now = DateTime.now();
@@ -172,7 +169,7 @@ public class IndexController {
                                         @RequestParam( value = "time" ) String time, HttpServletRequest servletRequest) {
         String accessToken = AccessTokenUtil.getToken();
 
-        String userId = getUserId(accessToken, servletRequest, requestAuthCode);
+        String userId = AccessTokenUtil.getUserId(accessToken, servletRequest, requestAuthCode);
 
         log(1, userId);
 
@@ -194,7 +191,7 @@ public class IndexController {
     public ServiceResult setRemind(@RequestParam( value = "authCode" ) String requestAuthCode, @RequestParam( value = "status" ) int status,
                                    HttpServletRequest servletRequest) {
         String accessToken = AccessTokenUtil.getToken();
-        String userId = getUserId(accessToken, servletRequest, requestAuthCode);
+        String userId = AccessTokenUtil.getUserId(accessToken, servletRequest, requestAuthCode);
 
         Remind remindByUserId = remindMapper.findRemindByUserId(userId);
         if ( status == 0 ) {
@@ -235,7 +232,7 @@ public class IndexController {
         //标记类型 1 请假 2 外勤 3 出差
         String accessToken = AccessTokenUtil.getToken();
 
-        String userId = getUserId(accessToken, servletRequest, requestAuthCode);
+        String userId = AccessTokenUtil.getUserId(accessToken, servletRequest, requestAuthCode);
 
         int year = Integer.parseInt(time.split("-")[0]);
         int month = Integer.parseInt(time.split("-")[1]);
@@ -269,31 +266,7 @@ public class IndexController {
         return serviceResult;
     }
 
-    private String getUserId(String accessToken, HttpServletRequest servletRequest, String requestAuthCode) {//获取accessToken,注意正是代码要有异常流处理
-        String userId = "";
-        HttpSession session = servletRequest.getSession();
-        if ( session.getAttribute("userId") == null ) {
-            //获取用户信息
-            DingTalkClient client = new DefaultDingTalkClient(URLConstant.URL_GET_USER_INFO);
-            OapiUserGetuserinfoRequest request = new OapiUserGetuserinfoRequest();
-            request.setCode(requestAuthCode);
-            request.setHttpMethod("GET");
-            OapiUserGetuserinfoResponse response;
-            try {
-                response = client.execute(request, accessToken);
-            } catch ( ApiException e ) {
-                e.printStackTrace();
-                return null;
-            }
-            //3.查询得到当前用户的userId
-            // 获得到userId之后应用应该处理应用自身的登录会话管理（session）,避免后续的业务交互（前端到应用服务端）每次都要重新获取用户身份，提升用户体验
-            userId = response.getUserid();
-            session.setAttribute("userId", userId);
-        } else {
-            userId = ( String ) session.getAttribute("userId");
-        }
-        return userId;
-    }
+
 
 
     /**
@@ -744,7 +717,7 @@ public class IndexController {
             }
         }
         initInfoModel.setAllTime(wholeMothTime);
-        if ( errDays.toString() != null && !errDays.toString().equals("") && !errDays.toString().equals("0,")) {
+        if ( errDays.toString() != null && !errDays.toString().equals("") && !errDays.toString().equals("0,") ) {
             initInfoModel.setErrDays(errDays.subSequence(0, errDays.length() - 1).toString());
         }
         return initInfoModel;
