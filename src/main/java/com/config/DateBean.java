@@ -3,6 +3,7 @@ package com.config;
 import org.joda.time.DateTime;
 
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -83,6 +84,7 @@ public class DateBean {
         }
     }
 
+
     /**
      * 获取之前天数之前的上班天数
      *
@@ -157,4 +159,21 @@ public class DateBean {
         }
         return false;
     }
+
+    /**
+     * 判断指定日期是否是工作日
+     *
+     * @param day
+     * @return
+     */
+    public boolean isInWork(Date day) {
+        if ( day == null )
+            return false;
+        if ( month.contains(new MonthBean(new DateTime(day).getDayOfMonth() + "")) ) {
+            return true;
+        }
+        return false;
+    }
+
+
 }
