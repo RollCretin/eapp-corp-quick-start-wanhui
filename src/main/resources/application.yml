@@ -4,24 +4,39 @@ server:
 spring:
   datasource:
 #   ontest server line to online
-    url: jdbc:mysql://39.106.4.197:3306/dingtalk?characterEncoding=UTF-8
-    username: cretin_dingtalk
-    password: MMAcGMXdg5sA4SxO
-    driver-class-name: com.mysql.jdbc.Driver
-    type: com.alibaba.druid.pool.DruidDataSource
+#    url: jdbc:mysql://39.106.4.197:3306/dingtalk?characterEncoding=UTF-8
+#    username: cretin_dingtalk
+#    password: MMAcGMXdg5sA4SxO
+#    driver-class-name: com.mysql.jdbc.Driver
+#    type: com.alibaba.druid.pool.DruidDataSource
 
 
 #    测试环境
-#    url: jdbc:mysql://127.0.0.1:3306/dingtalk?characterEncoding=UTF-8
-#    username: root
-#    password:
+    url: jdbc:mysql://127.0.0.1:3306/dingtalk?characterEncoding=UTF-8
+    username: root
+    password:
 
 #    线上环境环境
 #    url: jdbc:mysql://localhost:3306/dingtalk?characterEncoding=UTF-8
 #    username: root
 #    password: cretin
-#    driver-class-name: com.mysql.jdbc.Driver
-#    type: com.alibaba.druid.pool.DruidDataSource
+    driver-class-name: com.mysql.jdbc.Driver
+    type: com.alibaba.druid.pool.DruidDataSource
+  mail:
+        host: smtp.qq.com
+        username: 792075058@qq.com
+        password: mzsfuxlsvlzobedb
+        default-encoding: UTF-8
+        ssl:
+          trust: smtp.exmail.qq.com
+        properties:
+          mail:
+            smtp:
+              auth: true  #是否需要认证
+              socketFactory:
+                class: javax.net.ssl.SSLSocketFactory #SSL证书Socket工厂
+                port: 587 #587
+            debug: true
 
 mybatis:
   type-aliases-package: com.model.domain
