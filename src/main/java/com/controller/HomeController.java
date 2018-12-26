@@ -22,8 +22,10 @@ import com.dingtalk.api.response.OapiUserGetResponse;
 import com.mapper.RemindMapper;
 import com.model.DailyDingInfo;
 import com.model.DingInfo;
+import com.model.UserMainInfoModel;
 import com.model.domain.Remind;
 import com.model.response.HomeMainResp;
+import com.model.response.MealSupportResp;
 import com.taobao.api.ApiException;
 import com.util.AccessTokenUtil;
 import com.util.CommRequest;
@@ -41,6 +43,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -90,7 +94,7 @@ public class HomeController {
         DingInfo dingInfo = getDingInfo(userId, accessToken);
         homeMainResp.setLateTimes(dingInfo.getLateTimes());
         homeMainResp.setDingErrTimes(dingInfo.getDingErrTimes());
-        homeMainResp.setTodayDingInfo(dingInfo.getTodayDingInfo());
+        homeMainResp.setTodayDing(dingInfo.getTodayDing());
 
         //获取是否开启自动提醒功能
         Remind remindByUserId = remindMapper.findRemindByUserId(userId);
@@ -117,19 +121,24 @@ public class HomeController {
             getDingInfoDetail(today.getYear(), today.getMonthOfYear(), endDay, i, 0, userId, accessToken, client, monthWorkDay, days, todayDingInfo);
         }
 
+        //用户今日打卡情况
+        List<UserMainInfoModel.DingModel> todayDing = new ArrayList<>();
+
         //组装今日打卡信息
         if ( todayDingInfo != null && !todayDingInfo.isEmpty() ) {
-            StringBuilder stringBuilder = new StringBuilder();
             for ( int i = 0; i < todayDingInfo.size(); i++ ) {
                 DailyDingInfo info = todayDingInfo.get(i);
-                if ( i == todayDingInfo.size() - 1 ) {
-                    stringBuilder.append(info.getDesc());
-                } else {
-                    stringBuilder.append(info.getDesc() + "\n");
-                }
+                int type = info.getDingType().equals("OnDuty") ? 0 : 1;
+                todayDing.add(new UserMainInfoModel.DingModel(info.getDingTime().getTime(), type, new DateTime(info.getDingTime()).toString(Constant.DATE_FORMAT) + " " + StringUtils.getDingTypeDesc(info.getDingType())));
             }
-            dingInfo.setTodayDingInfo(stringBuilder.toString());
         }
+        Collections.sort(todayDing, new Comparator<UserMainInfoModel.DingModel>() {
+            @Override
+            public int compare(UserMainInfoModel.DingModel o1, UserMainInfoModel.DingModel o2) {
+                return o1.getDingType() - o2.getDingType();
+            }
+        });
+        dingInfo.setTodayDing(todayDing);
 
         int lateTimes = 0;
         int errTimes = 0;

@@ -10,6 +10,10 @@
  */
 package com.model.response;
 
+import com.model.UserMainInfoModel;
+
+import java.util.List;
+
 /**
  * 〈首页调用数据返回model〉
  *
@@ -18,9 +22,6 @@ package com.model.response;
  * @since 1.0.0
  */
 public class HomeMainResp {
-    //今日打卡信息
-    private String todayDingInfo;
-
     //本月迟到次数
     private int lateTimes;
 
@@ -36,15 +37,18 @@ public class HomeMainResp {
     //周五是否提醒
     private boolean weekNotice;
 
+    //用户今日打卡情况
+    private List<UserMainInfoModel.DingModel> todayDing;
+
     //昵称
     private String nickname;
 
-    public String getTodayDingInfo() {
-        return todayDingInfo;
+    public List<UserMainInfoModel.DingModel> getTodayDing() {
+        return todayDing;
     }
 
-    public void setTodayDingInfo(String todayDingInfo) {
-        this.todayDingInfo = todayDingInfo;
+    public void setTodayDing(List<UserMainInfoModel.DingModel> todayDing) {
+        this.todayDing = todayDing;
     }
 
     public int getLateTimes() {

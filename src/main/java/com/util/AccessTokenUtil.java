@@ -1,6 +1,7 @@
 package com.util;
 
 import com.config.Constant;
+import com.config.TokenInfoConfig;
 import com.config.URLConstant;
 import com.dingtalk.api.DefaultDingTalkClient;
 import com.dingtalk.api.DingTalkClient;
@@ -9,6 +10,7 @@ import com.dingtalk.api.request.OapiUserGetuserinfoRequest;
 import com.dingtalk.api.response.OapiGettokenResponse;
 import com.dingtalk.api.response.OapiUserGetuserinfoResponse;
 import com.taobao.api.ApiException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,18 +26,26 @@ public class AccessTokenUtil {
     private static final Logger bizLogger = LoggerFactory.getLogger(AccessTokenUtil.class);
 
     public static String getToken() throws RuntimeException {
-        try {
-            DefaultDingTalkClient client = new DefaultDingTalkClient(URL_GET_TOKKEN);
-            OapiGettokenRequest request = new OapiGettokenRequest();
-            request.setAppkey(Constant.APP_KEY);
-            request.setAppsecret(Constant.APP_SECRET);
-            request.setHttpMethod("GET");
-            OapiGettokenResponse response = client.execute(request);
-            String accessToken = response.getAccessToken();
-            return accessToken;
-        } catch (ApiException e) {
-            bizLogger.error("getAccessToken failed", e);
-            throw new RuntimeException();
+        if ( TokenInfoConfig.getInstance().getLastExpiresTime() == 0 || TokenInfoConfig.getInstance().getLastExpiresTime() >= System.currentTimeMillis() ) {
+            try {
+                DefaultDingTalkClient client = new DefaultDingTalkClient(URL_GET_TOKKEN);
+                OapiGettokenRequest request = new OapiGettokenRequest();
+                request.setAppkey(Constant.APP_KEY);
+                request.setAppsecret(Constant.APP_SECRET);
+                request.setHttpMethod("GET");
+                OapiGettokenResponse response = client.execute(request);
+                String accessToken = response.getAccessToken();
+                //token过期时间
+                Long expiresIn = response.getExpiresIn();
+                TokenInfoConfig.getInstance().setAccessToken(accessToken);
+                TokenInfoConfig.getInstance().setLastExpiresTime(System.currentTimeMillis() - 60 + expiresIn);
+                return accessToken;
+            } catch ( ApiException e ) {
+                bizLogger.error("getAccessToken failed", e);
+                throw new RuntimeException();
+            }
+        } else {
+            return TokenInfoConfig.getInstance().getAccessToken();
         }
     }
 

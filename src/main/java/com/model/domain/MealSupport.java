@@ -28,6 +28,26 @@ public class MealSupport {
     private String offduty;
     private Date addTime;
     private int year;
+    //部门名称
+    private String departmentName;
+    //用户名
+    private String userName;
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
+    public String getDepartmentName() {
+        return departmentName;
+    }
+
+    public void setDepartmentName(String departmentName) {
+        this.departmentName = departmentName;
+    }
 
     public int getId() {
         return id;

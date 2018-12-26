@@ -23,9 +23,12 @@ spring:
     driver-class-name: com.mysql.jdbc.Driver
     type: com.alibaba.druid.pool.DruidDataSource
   mail:
-        host: smtp.qq.com
-        username: 792075058@qq.com
-        password: mzsfuxlsvlzobedb
+#        host: smtp.qq.com
+        host: smtp.exmail.qq.com
+#        username: 792075058@qq.com
+        username: muxiannian@followme.cn
+#        password: mzsfuxlsvlzobedb
+        password: Cretin**29**
         default-encoding: UTF-8
         ssl:
           trust: smtp.exmail.qq.com
@@ -35,7 +38,7 @@ spring:
               auth: true  #是否需要认证
               socketFactory:
                 class: javax.net.ssl.SSLSocketFactory #SSL证书Socket工厂
-                port: 587 #587
+                port: 465 #587
             debug: true
 
 mybatis:

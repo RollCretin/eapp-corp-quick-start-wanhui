@@ -288,8 +288,8 @@ public class MealSupportController {
                             mealSupport.setDay(dateTime.getDayOfMonth());
                             mealSupport.setMonth(dateTime.getMonthOfYear());
                             mealSupport.setYear(dateTime.getYear());
-                            mealSupport.setOffduty(new DateTime(dailyDingInfo.getDingTime()).toString(Constant.DATE_FORMAT));
-                            mealSupport.setOnduty(new DateTime(dailyDingInfo2.getDingTime()).toString(Constant.DATE_FORMAT));
+                            mealSupport.setOffduty(new DateTime(getOffDutyTime(value)).toString(Constant.DATE_FORMAT));
+                            mealSupport.setOnduty(new DateTime(getOnDutyTime(value)).toString(Constant.DATE_FORMAT));
                             mealSupport.setUserId(userId);
                             list.add(mealSupport);
                         }
@@ -303,6 +303,15 @@ public class MealSupportController {
     private Date getOffDutyTime(List<DailyDingInfo> value) {
         for ( DailyDingInfo dailyDingInfo : value ) {
             if ( dailyDingInfo.getDingType().equals("OffDuty") ) {
+                return dailyDingInfo.getDingTime();
+            }
+        }
+        return null;
+    }
+
+    private Date getOnDutyTime(List<DailyDingInfo> value) {
+        for ( DailyDingInfo dailyDingInfo : value ) {
+            if ( dailyDingInfo.getDingType().equals("OnDuty") ) {
                 return dailyDingInfo.getDingTime();
             }
         }

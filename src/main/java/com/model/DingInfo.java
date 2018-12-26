@@ -10,6 +10,8 @@
  */
 package com.model;
 
+import java.util.List;
+
 /**
  * 〈打卡统计数据〉
  *
@@ -18,8 +20,8 @@ package com.model;
  * @since 1.0.0
  */
 public class DingInfo {
-    //今日打卡信息
-    private String todayDingInfo;
+    //用户今日打卡情况
+    private List<UserMainInfoModel.DingModel> todayDing;
 
     //本月迟到次数
     private int lateTimes;
@@ -27,12 +29,12 @@ public class DingInfo {
     //本月打卡异常数据
     private int dingErrTimes;
 
-    public String getTodayDingInfo() {
-        return todayDingInfo;
+    public List<UserMainInfoModel.DingModel> getTodayDing() {
+        return todayDing;
     }
 
-    public void setTodayDingInfo(String todayDingInfo) {
-        this.todayDingInfo = todayDingInfo;
+    public void setTodayDing(List<UserMainInfoModel.DingModel> todayDing) {
+        this.todayDing = todayDing;
     }
 
     public int getLateTimes() {

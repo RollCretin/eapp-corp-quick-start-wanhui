@@ -22,8 +22,11 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.List;
 
+/**
+ * 日常通知定时任务
+ */
 @Component
-public class ScheduledService {
+public class NotifyScheduledService {
     @Autowired
     private RemindMapper remindMapper;
 

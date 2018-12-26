@@ -14,8 +14,10 @@ import com.config.URLConstant;
 import com.dingtalk.api.DefaultDingTalkClient;
 import com.dingtalk.api.DingTalkClient;
 import com.dingtalk.api.request.OapiAttendanceGetusergroupRequest;
+import com.dingtalk.api.request.OapiDepartmentGetRequest;
 import com.dingtalk.api.request.OapiUserGetRequest;
 import com.dingtalk.api.response.OapiAttendanceGetusergroupResponse;
+import com.dingtalk.api.response.OapiDepartmentGetResponse;
 import com.dingtalk.api.response.OapiUserGetResponse;
 import com.taobao.api.ApiException;
 
@@ -49,12 +51,33 @@ public class CommRequest {
     }
 
     /**
+     * 获取部门信息
+     *
+     * @param accessToken
+     * @param departmentId
+     * @return
+     */
+    public static OapiDepartmentGetResponse getDepartmentInfo(String accessToken, String departmentId) {
+        try {
+            DingTalkClient client = new DefaultDingTalkClient("https://oapi.dingtalk.com/department/get");
+            OapiDepartmentGetRequest request = new OapiDepartmentGetRequest();
+            request.setId(departmentId);
+            request.setHttpMethod("GET");
+            return client.execute(request, accessToken);
+        } catch ( ApiException e ) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
      * 获取考勤组名字
      *
      * @param accessToken
      * @param userId
      * @return
      */
+
     public static String getKaoqinzu(String accessToken, String userId) {
         try {
             DefaultDingTalkClient client = new DefaultDingTalkClient("https://oapi.dingtalk.com/topapi/attendance/getusergroup");
