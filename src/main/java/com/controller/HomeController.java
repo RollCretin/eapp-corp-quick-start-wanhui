@@ -20,12 +20,13 @@ import com.dingtalk.api.request.OapiAttendanceListRequest;
 import com.dingtalk.api.response.OapiAttendanceListResponse;
 import com.dingtalk.api.response.OapiUserGetResponse;
 import com.mapper.RemindMapper;
+import com.mapper.UserMapper;
 import com.model.DailyDingInfo;
 import com.model.DingInfo;
 import com.model.UserMainInfoModel;
 import com.model.domain.Remind;
+import com.model.domain.User;
 import com.model.response.HomeMainResp;
-import com.model.response.MealSupportResp;
 import com.taobao.api.ApiException;
 import com.util.AccessTokenUtil;
 import com.util.CommRequest;
@@ -68,6 +69,9 @@ public class HomeController {
     @Autowired
     private RemindMapper remindMapper;
 
+    @Autowired
+    private UserMapper userMapper;
+
     @RequestMapping( value = "/main", method = RequestMethod.POST )
     public ServiceResult<HomeMainResp> getMainData(@RequestParam( value = "authCode" ) String authCode,
                                                    HttpServletRequest request) {
@@ -101,6 +105,14 @@ public class HomeController {
         if ( remindByUserId != null ) {
             homeMainResp.setWeekNotice(remindByUserId.getStatus() == 0 ? false : true);
         }
+
+        User userById = userMapper.findUserById(userId);
+        if ( userById == null )
+            userMapper.insert(userId, userInfo.getName(), userInfo.getAvatar(), kaoqinzu);
+        else {
+            userMapper.update(userId, userInfo.getName(), userInfo.getAvatar(), kaoqinzu);
+        }
+
         return ServiceResult.success(homeMainResp);
     }
 

@@ -1,6 +1,6 @@
 /**
  * Copyright (C), 2015-2018, XXX有限公司
- * FileName: MealSupportResp
+ * FileName: MealSupportChildResp
  * Author:   cretin
  * Date:     12/25/18 09:20
  * Description: 可以申请餐补的日期
@@ -10,7 +10,7 @@
  */
 package com.model.response;
 
-import java.util.Date;
+import java.util.List;
 
 /**
  * 〈可以申请餐补的日期〉
@@ -20,86 +20,34 @@ import java.util.Date;
  * @since 1.0.0
  */
 public class MealSupportResp {
-    private int id;
-    private String userId;
-    private int month;
-    private int day;
-    private String onduty;
-    private String offduty;
-    private Date addTime;
-    private int year;
-    //状态 0 未申请 1 已申请
-    private int status;
+    //日期
+    private String date;
+    //已申请money
+    private String allMoney;
 
-    public int getId() {
-        return id;
+    public String getAllMoney() {
+        return allMoney;
     }
 
-    public void setId(int id) {
-        this.id = id;
+    public void setAllMoney(String allMoney) {
+        this.allMoney = allMoney;
     }
 
-    public String getUserId() {
-        return userId;
+    private List<MealSupportChildResp> list;
+
+    public String getDate() {
+        return date;
     }
 
-    public void setUserId(String userId) {
-        this.userId = userId;
+    public void setDate(String date) {
+        this.date = date;
     }
 
-    public int getMonth() {
-        return month;
+    public List<MealSupportChildResp> getList() {
+        return list;
     }
 
-    public void setMonth(int month) {
-        this.month = month;
-    }
-
-    public int getDay() {
-        return day;
-    }
-
-    public void setDay(int day) {
-        this.day = day;
-    }
-
-    public String getOnduty() {
-        return onduty;
-    }
-
-    public void setOnduty(String onduty) {
-        this.onduty = onduty;
-    }
-
-    public String getOffduty() {
-        return offduty;
-    }
-
-    public void setOffduty(String offduty) {
-        this.offduty = offduty;
-    }
-
-    public Date getAddTime() {
-        return addTime;
-    }
-
-    public void setAddTime(Date addTime) {
-        this.addTime = addTime;
-    }
-
-    public int getYear() {
-        return year;
-    }
-
-    public void setYear(int year) {
-        this.year = year;
-    }
-
-    public int getStatus() {
-        return status;
-    }
-
-    public void setStatus(int status) {
-        this.status = status;
+    public void setList(List<MealSupportChildResp> list) {
+        this.list = list;
     }
 }

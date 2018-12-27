@@ -15,14 +15,15 @@ import com.dingtalk.api.DefaultDingTalkClient;
 import com.dingtalk.api.DingTalkClient;
 import com.dingtalk.api.request.OapiAttendanceListRequest;
 import com.dingtalk.api.response.OapiAttendanceListResponse;
+import com.mapper.CommonMapper;
 import com.mapper.MealSupportMapper;
 import com.model.DailyDingInfo;
+import com.model.domain.AppConfig;
 import com.model.domain.MealSupport;
-import com.model.response.HomeMainResp;
+import com.model.response.MealSupportChildResp;
 import com.model.response.MealSupportResp;
 import com.taobao.api.ApiException;
 import com.util.AccessTokenUtil;
-import com.util.CommRequest;
 import com.util.ServiceResult;
 import com.util.StringUtils;
 import com.util.TimeUtils;
@@ -63,20 +64,22 @@ public class MealSupportController {
     @Autowired
     private MealSupportMapper mealSupportMapper;
 
-    @RequestMapping( value = "/cancel", method = RequestMethod.POST )
-    public ServiceResult<List<MealSupportResp>> cancel(@RequestParam( value = "authCode" ) String authCode,
-                                                       @RequestParam( value = "day" ) int day,
-                                                       HttpServletRequest request) {
+    @Autowired
+    private CommonMapper commonMapper;
+
+    public ServiceResult<MealSupportResp> cancel(@RequestParam( value = "authCode" ) String authCode,
+                                                 @RequestParam( value = "day" ) int day,
+                                                 HttpServletRequest request) {
         String accessToken = AccessTokenUtil.getToken();
         String userId = AccessTokenUtil.getUserId(accessToken, request, authCode);
         DateTime now = DateTime.now();
-        MealSupport aimMealSupport = mealSupportMapper.getAimMealSupport(userId, now.getYear(), now.getMonthOfYear(), now.getDayOfMonth());
+        MealSupport aimMealSupport = mealSupportMapper.getAimMealSupport(userId, now.getYear(), now.getMonthOfYear(), day);
         List<MealSupport> list = getMonthAvaiableData(userId, accessToken);
         //查询所有的数据
         List<MealSupport> mealSupports = mealSupportMapper.findMealSupport(userId, now.getYear(), now.getMonthOfYear());
-        List<MealSupportResp> respList = new ArrayList<>();
+        List<MealSupportChildResp> respList = new ArrayList<>();
         for ( MealSupport mealSupport : list ) {
-            MealSupportResp mealSupportResp = new MealSupportResp();
+            MealSupportChildResp mealSupportResp = new MealSupportChildResp();
             BeanUtils.copyProperties(mealSupport, mealSupportResp);
             if ( mealSupports != null && !mealSupports.isEmpty() ) {
                 HH:
@@ -92,6 +95,7 @@ public class MealSupportController {
                 if ( aimMealSupport != null ) {
                     try {
                         mealSupportMapper.deleteOneById(aimMealSupport.getId());
+                        mealSupportResp.setStatus(0);
                     } catch ( Exception e ) {
                         return ServiceResult.failure("请求超时，请稍后再试");
                     }
@@ -100,7 +104,41 @@ public class MealSupportController {
             respList.add(mealSupportResp);
         }
         sort(respList);
-        return ServiceResult.success(respList);
+        MealSupportResp resp = new MealSupportResp();
+        resp.setList(respList);
+        resp.setAllMoney(getAllMoney(respList));
+        resp.setDate(now.toString("yyyy年MM月"));
+        return ServiceResult.success(resp);
+    }
+
+    private String getAllMoney(List<MealSupportChildResp> list) {
+        AppConfig appConfig = commonMapper.getAppConfig();
+        int money = 0;
+        for ( MealSupportChildResp mealSupportChildResp : list ) {
+            if ( appConfig == null ) {
+                mealSupportChildResp.setMoney(20);
+            } else {
+                mealSupportChildResp.setMoney(appConfig.getMealMoney());
+            }
+            if ( mealSupportChildResp.getStatus() == 1 ) {
+                money += mealSupportChildResp.getMoney();
+            }
+        }
+        return money + "";
+    }
+
+    @RequestMapping( value = "/apply", method = RequestMethod.POST )
+    public ServiceResult<MealSupportResp> applyOrCancel(@RequestParam( value = "authCode" ) String authCode,
+                                                        @RequestParam( value = "day" ) int day,
+                                                        @RequestParam( value = "status" ) int status,
+                                                        HttpServletRequest request) {
+        if ( status == 1 ) {
+            //申请
+            return apply(authCode, day, request);
+        } else {
+            //取消
+            return cancel(authCode, day, request);
+        }
     }
 
     /**
@@ -110,20 +148,19 @@ public class MealSupportController {
      * @param request
      * @return
      */
-    @RequestMapping( value = "/apply", method = RequestMethod.POST )
-    public ServiceResult<List<MealSupportResp>> apply(@RequestParam( value = "authCode" ) String authCode,
-                                                      @RequestParam( value = "day" ) int day,
-                                                      HttpServletRequest request) {
+    public ServiceResult<MealSupportResp> apply(@RequestParam( value = "authCode" ) String authCode,
+                                                @RequestParam( value = "day" ) int day,
+                                                HttpServletRequest request) {
         String accessToken = AccessTokenUtil.getToken();
         String userId = AccessTokenUtil.getUserId(accessToken, request, authCode);
         DateTime now = DateTime.now();
-        MealSupport aimMealSupport = mealSupportMapper.getAimMealSupport(userId, now.getYear(), now.getMonthOfYear(), now.getDayOfMonth());
+        MealSupport aimMealSupport = mealSupportMapper.getAimMealSupport(userId, now.getYear(), now.getMonthOfYear(), day);
         List<MealSupport> list = getMonthAvaiableData(userId, accessToken);
         //查询所有的数据
         List<MealSupport> mealSupports = mealSupportMapper.findMealSupport(userId, now.getYear(), now.getMonthOfYear());
-        List<MealSupportResp> respList = new ArrayList<>();
+        List<MealSupportChildResp> respList = new ArrayList<>();
         for ( MealSupport mealSupport : list ) {
-            MealSupportResp mealSupportResp = new MealSupportResp();
+            MealSupportChildResp mealSupportResp = new MealSupportChildResp();
             BeanUtils.copyProperties(mealSupport, mealSupportResp);
             if ( mealSupports != null && !mealSupports.isEmpty() ) {
                 HH:
@@ -150,7 +187,11 @@ public class MealSupportController {
             respList.add(mealSupportResp);
         }
         sort(respList);
-        return ServiceResult.success(respList);
+        MealSupportResp resp = new MealSupportResp();
+        resp.setList(respList);
+        resp.setAllMoney(getAllMoney(respList));
+        resp.setDate(now.toString("yyyy年MM月"));
+        return ServiceResult.success(resp);
     }
 
     /**
@@ -161,8 +202,8 @@ public class MealSupportController {
      * @return
      */
     @RequestMapping( value = "/onekey/cancel", method = RequestMethod.POST )
-    public ServiceResult<List<MealSupportResp>> oneKeyCancel(@RequestParam( value = "authCode" ) String authCode,
-                                                             HttpServletRequest request) {
+    public ServiceResult<MealSupportResp> oneKeyCancel(@RequestParam( value = "authCode" ) String authCode,
+                                                       HttpServletRequest request) {
         String accessToken = AccessTokenUtil.getToken();
         String userId = AccessTokenUtil.getUserId(accessToken, request, authCode);
         DateTime now = DateTime.now();
@@ -172,7 +213,7 @@ public class MealSupportController {
             return ServiceResult.failure("请求超时，请稍后再试");
         }
         //清除所有的数据
-        ServiceResult<List<MealSupportResp>> availableData = getAvailableData(authCode, request);
+        ServiceResult<MealSupportResp> availableData = getAvailableData(authCode, request);
         return availableData;
     }
 
@@ -184,8 +225,8 @@ public class MealSupportController {
      * @return
      */
     @RequestMapping( value = "/onekey/apply", method = RequestMethod.POST )
-    public ServiceResult<List<MealSupportResp>> oneKeyApply(@RequestParam( value = "authCode" ) String authCode,
-                                                            HttpServletRequest request) {
+    public ServiceResult<MealSupportResp> oneKeyApply(@RequestParam( value = "authCode" ) String authCode,
+                                                      HttpServletRequest request) {
         String accessToken = AccessTokenUtil.getToken();
         String userId = AccessTokenUtil.getUserId(accessToken, request, authCode);
         List<MealSupport> list = getMonthAvaiableData(userId, accessToken);
@@ -217,17 +258,21 @@ public class MealSupportController {
         } catch ( Exception e ) {
             return ServiceResult.failure("请求超时，请稍后再试");
         }
-        List<MealSupportResp> respList = new ArrayList<>();
+        List<MealSupportChildResp> respList = new ArrayList<>();
         if ( mealSupports != null && !mealSupports.isEmpty() ) {
             for ( MealSupport mealSupport : mealSupports ) {
-                MealSupportResp mealSupportResp1 = new MealSupportResp();
+                MealSupportChildResp mealSupportResp1 = new MealSupportChildResp();
                 BeanUtils.copyProperties(mealSupport, mealSupportResp1);
                 mealSupportResp1.setStatus(1);
                 respList.add(mealSupportResp1);
             }
         }
         sort(respList);
-        return ServiceResult.success(respList);
+        MealSupportResp resp = new MealSupportResp();
+        resp.setList(respList);
+        resp.setAllMoney(getAllMoney(respList));
+        resp.setDate(now.toString("yyyy年MM月"));
+        return ServiceResult.success(resp);
     }
 
     /**
@@ -238,17 +283,17 @@ public class MealSupportController {
      * @return
      */
     @RequestMapping( value = "/list", method = RequestMethod.POST )
-    public ServiceResult<List<MealSupportResp>> getAvailableData(@RequestParam( value = "authCode" ) String authCode,
-                                                                 HttpServletRequest request) {
+    public ServiceResult<MealSupportResp> getAvailableData(@RequestParam( value = "authCode" ) String authCode,
+                                                           HttpServletRequest request) {
         String accessToken = AccessTokenUtil.getToken();
         String userId = AccessTokenUtil.getUserId(accessToken, request, authCode);
         List<MealSupport> list = getMonthAvaiableData(userId, accessToken);
         //查询所有的数据
         DateTime now = DateTime.now();
         List<MealSupport> mealSupports = mealSupportMapper.findMealSupport(userId, now.getYear(), now.getMonthOfYear());
-        List<MealSupportResp> respList = new ArrayList<>();
+        List<MealSupportChildResp> respList = new ArrayList<>();
         for ( MealSupport mealSupport : list ) {
-            MealSupportResp mealSupportResp = new MealSupportResp();
+            MealSupportChildResp mealSupportResp = new MealSupportChildResp();
             BeanUtils.copyProperties(mealSupport, mealSupportResp);
             if ( mealSupports != null && !mealSupports.isEmpty() ) {
                 HH:
@@ -262,7 +307,11 @@ public class MealSupportController {
             respList.add(mealSupportResp);
         }
         sort(respList);
-        return ServiceResult.success(respList);
+        MealSupportResp resp = new MealSupportResp();
+        resp.setList(respList);
+        resp.setDate(now.toString("yyyy年MM月"));
+        resp.setAllMoney(getAllMoney(respList));
+        return ServiceResult.success(resp);
     }
 
     private List<MealSupport> getMonthAvaiableData(String userId, String accessToken) {
@@ -392,10 +441,10 @@ public class MealSupportController {
         return dailyDingInfoMap;
     }
 
-    private void sort(List<MealSupportResp> list) {
-        Collections.sort(list, new Comparator<MealSupportResp>() {
+    private void sort(List<MealSupportChildResp> list) {
+        Collections.sort(list, new Comparator<MealSupportChildResp>() {
             @Override
-            public int compare(MealSupportResp o1, MealSupportResp o2) {
+            public int compare(MealSupportChildResp o1, MealSupportChildResp o2) {
                 return o1.getDay() - o2.getDay();
             }
         });

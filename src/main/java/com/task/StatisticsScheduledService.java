@@ -1,7 +1,11 @@
 package com.task;
 
 import com.config.Constant;
+import com.config.TokenInfoConfig;
+import com.dingtalk.api.DefaultDingTalkClient;
+import com.dingtalk.api.request.OapiGettokenRequest;
 import com.dingtalk.api.response.OapiDepartmentGetResponse;
+import com.dingtalk.api.response.OapiGettokenResponse;
 import com.dingtalk.api.response.OapiUserGetResponse;
 import com.mapper.CommonMapper;
 import com.mapper.MealSupportMapper;
@@ -29,6 +33,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.config.URLConstant.URL_GET_TOKKEN;
+
 /**
  * 日常通知定时任务
  */
@@ -42,6 +48,26 @@ public class StatisticsScheduledService {
 
     @Autowired
     private CommonMapper commonMapper;
+
+    @Scheduled( cron = "0 0/10 * * * ?" )
+    public void getAccessToken() {
+        try {
+            DefaultDingTalkClient client = new DefaultDingTalkClient(URL_GET_TOKKEN);
+            OapiGettokenRequest request = new OapiGettokenRequest();
+            request.setAppkey(Constant.APP_KEY);
+            request.setAppsecret(Constant.APP_SECRET);
+            request.setHttpMethod("GET");
+            OapiGettokenResponse response = client.execute(request);
+            String accessToken = response.getAccessToken();
+            //token过期时间
+            TokenInfoConfig.getInstance().setAccessToken(accessToken);
+            Long expiresIn = response.getExpiresIn();
+            TokenInfoConfig.getInstance().setLastExpiresTime(System.currentTimeMillis() - 60 + expiresIn / 2);
+            System.out.println("我更新了一次token");
+        } catch ( Exception e ) {
+            e.printStackTrace();
+        }
+    }
 
     //每月最后一天晚上10点给相关人员发布信息
     @Scheduled( cron = "0 0 0 1 * ?" )
@@ -109,11 +135,7 @@ public class StatisticsScheduledService {
 
         int singleMoney = 20;
         if ( appConfig != null ) {
-            try {
-                singleMoney = Integer.parseInt(appConfig.getMealMoney());
-            } catch ( Exception e ) {
-                e.printStackTrace();
-            }
+            singleMoney = appConfig.getMealMoney();
         }
 
         List<List<Object>> rows = new ArrayList();

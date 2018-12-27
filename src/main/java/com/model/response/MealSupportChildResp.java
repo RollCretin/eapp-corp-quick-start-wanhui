@@ -1,25 +1,30 @@
 /**
  * Copyright (C), 2015-2018, XXX有限公司
- * FileName: MealSupport
+ * FileName: MealSupportChildResp
  * Author:   cretin
- * Date:     12/21/18 17:35
- * Description: 申请餐补
+ * Date:     12/25/18 09:20
+ * Description: 可以申请餐补的日期
  * History:
  * <author>          <time>          <version>          <desc>
  * 作者姓名           修改时间           版本号              描述
  */
-package com.model.domain;
+package com.model.response;
 
+import com.util.TimeUtils;
+
+import org.joda.time.DateTime;
+
+import java.sql.Time;
 import java.util.Date;
 
 /**
- * 〈申请餐补〉
+ * 〈可以申请餐补的日期〉
  *
  * @author cretin
- * @create 12/21/18
+ * @create 12/25/18
  * @since 1.0.0
  */
-public class MealSupport {
+public class MealSupportChildResp {
     private int id;
     private String userId;
     private int month;
@@ -28,35 +33,22 @@ public class MealSupport {
     private String offduty;
     private Date addTime;
     private int year;
+    //状态 0 未申请 1 已申请
+    private int status;
     //餐补金额
-    private String money;
-    //部门名称
-    private String departmentName;
-    //用户名
-    private String userName;
+    private int money;
+    private String date;
 
-    public String getMoney() {
+    public String getDate() {
+        return year + "-" + TimeUtils.formatInt(month) + "-" + TimeUtils.formatInt(day);
+    }
+
+    public int getMoney() {
         return money;
     }
 
-    public void setMoney(String money) {
+    public void setMoney(int money) {
         this.money = money;
-    }
-
-    public String getUserName() {
-        return userName;
-    }
-
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
-
-    public String getDepartmentName() {
-        return departmentName;
-    }
-
-    public void setDepartmentName(String departmentName) {
-        this.departmentName = departmentName;
     }
 
     public int getId() {
@@ -121,5 +113,13 @@ public class MealSupport {
 
     public void setYear(int year) {
         this.year = year;
+    }
+
+    public int getStatus() {
+        return status;
+    }
+
+    public void setStatus(int status) {
+        this.status = status;
     }
 }

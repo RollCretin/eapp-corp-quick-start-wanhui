@@ -38,7 +38,7 @@ public class AccessTokenUtil {
                 //token过期时间
                 Long expiresIn = response.getExpiresIn();
                 TokenInfoConfig.getInstance().setAccessToken(accessToken);
-                TokenInfoConfig.getInstance().setLastExpiresTime(System.currentTimeMillis() - 60 + expiresIn);
+                TokenInfoConfig.getInstance().setLastExpiresTime(System.currentTimeMillis() - 60 + expiresIn / 2);
                 return accessToken;
             } catch ( ApiException e ) {
                 bizLogger.error("getAccessToken failed", e);

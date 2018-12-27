@@ -22,7 +22,7 @@ import java.util.Date;
 public class AppConfig {
     private int id;
     //餐补每顿的金额
-    private String mealMoney;
+    private int mealMoney;
     //更新时间
     private Date updateTime;
 
@@ -34,11 +34,11 @@ public class AppConfig {
         this.id = id;
     }
 
-    public String getMealMoney() {
+    public int getMealMoney() {
         return mealMoney;
     }
 
-    public void setMealMoney(String mealMoney) {
+    public void setMealMoney(int mealMoney) {
         this.mealMoney = mealMoney;
     }
 
