@@ -70,121 +70,128 @@ public class StatisticsScheduledService {
     }
 
     //每月最后一天晚上10点给相关人员发布信息
-    @Scheduled( cron = "0 0 0 1 * ?" )
-//    @Scheduled( cron = "0 0/5 * * * ?" )
+    @Scheduled( cron = "0 0 22 28,29,30,31 * ? " )
     public void statistics() {
-        //获取配置
-        AppConfig appConfig =
-                commonMapper.getAppConfig();
-        List<UserManager> allUserManager =
-                commonMapper.getAllUserManager();
-        if ( allUserManager == null || allUserManager.isEmpty() )
+        //获取当前月最后一天
+        DateTime now = DateTime.now();
+        //如果不是最后一天 不操作
+        if ( now.getDayOfMonth() != now.dayOfMonth().withMaximumValue().getDayOfMonth() ) {
             return;
-
-        ExcelData data = new ExcelData();
-        data.setName("餐补申请统计");
-        List<String> titles = new ArrayList();
-        titles.add("序号");
-        titles.add("加班人姓名");
-        titles.add("所在部门");
-        titles.add("加班日期");
-        titles.add("上班时间");
-        titles.add("下班时间");
-        titles.add("餐费（元）");
-        titles.add("总计(元）");
-        titles.add("备注");
-        titles.add("领款签收");
-        data.setTitles(titles);
-
-        DateTime now = DateTime.now().minusDays(1);
-        //我们需要根据id来分组
-        Map<String, List<MealSupport>> groupList = new HashMap<>();
-        //获取所有本月需要申请餐补的数据
-        List<MealSupport> allUserMealSupport = mealSupportMapper.findAllUserMealSupport(now.getYear(), now.getMonthOfYear());
-        for ( MealSupport mealSupport : allUserMealSupport ) {
-            if ( groupList.containsKey(mealSupport.getUserId()) ) {
-                List<MealSupport> mealSupportList = groupList.get(mealSupport.getUserId());
-                mealSupportList.add(mealSupport);
-                groupList.put(mealSupport.getUserId(), mealSupportList);
-            } else {
-                List<MealSupport> mealSupportList = new ArrayList<>();
-                mealSupportList.add(mealSupport);
-                groupList.put(mealSupport.getUserId(), mealSupportList);
-            }
-        }
-        //遍历获取部门id
-        for ( Map.Entry<String, List<MealSupport>> entry : groupList.entrySet() ) {
-            String key = entry.getKey();
-            OapiUserGetResponse userInfo = CommRequest.getUserInfo(AccessTokenUtil.getToken(), key);
-            if ( userInfo != null ) {
-                List<Long> department = userInfo.getDepartment();
-                if ( department != null && !department.isEmpty() ) {
-                    StringBuilder stringBuilder = new StringBuilder();
-                    for ( Long departmentId : department ) {
-                        OapiDepartmentGetResponse departmentInfo = CommRequest.getDepartmentInfo(AccessTokenUtil.getToken(), departmentId + "");
-                        stringBuilder.append(departmentInfo.getName() + " ");
-                    }
-                    List<MealSupport> value = entry.getValue();
-                    for ( MealSupport mealSupport : value ) {
-                        mealSupport.setDepartmentName(stringBuilder.toString());
-                        mealSupport.setUserName(userInfo.getName());
-                    }
-                }
-            }
         }
 
-        int singleMoney = 20;
-        if ( appConfig != null ) {
-            singleMoney = appConfig.getMealMoney();
-        }
-
-        List<List<Object>> rows = new ArrayList();
-        int index = 1;
-        //遍历map中的值
-        for ( List<MealSupport> value : groupList.values() ) {
-            if ( value != null ) {
-                Collections.sort(value, new Comparator<MealSupport>() {
-                    @Override
-                    public int compare(MealSupport o1, MealSupport o2) {
-                        return o1.getDay() - o2.getDay();
-                    }
-                });
-                int money = 0;
-                for ( int i = 0; i < value.size(); i++ ) {
-                    MealSupport mealSupport = value.get(i);
-                    money += singleMoney;
-                    List<Object> row = new ArrayList();
-                    row.add(index);
-                    row.add(mealSupport.getUserName());
-                    row.add(mealSupport.getDepartmentName());
-                    row.add(mealSupport.getYear() + "-" + TimeUtils.formatInt(mealSupport.getMonth()) + "-" + TimeUtils.formatInt(mealSupport.getDay()));
-                    row.add(mealSupport.getOnduty());
-                    row.add(mealSupport.getOffduty());
-                    row.add(singleMoney);
-                    if ( i == value.size() - 1 )
-                        row.add(money);
-                    row.add("");
-                    row.add("");
-                    rows.add(row);
-                    index++;
-                }
-            }
-        }
-
-        data.setRows(rows);
-
-        //生成本地
-        String fileName = "followme_" + DateTime.now().toString("yyyyMMddHHmmsss") + ".xlsx";
+        String fileName = "followme_" + DateTime.now().toString("yyyyMMdd") + ".xlsx";
         File file = new File(Constant.EXCEL_PATH);
         if ( !file.exists() && !file.isDirectory() ) {
             file.mkdirs();
         }
-        try {
-            FileOutputStream out = new FileOutputStream(new File(file, fileName));
-            ExcelUtils.exportExcel(data, out);
-            out.close();
-        } catch ( Exception e ) {
-            e.printStackTrace();
+        File aimFile = new File(file, fileName);
+        List<UserManager> allUserManager =
+                commonMapper.getAllUserManager();
+        if ( allUserManager == null || allUserManager.isEmpty() )
+            return;
+        if(!aimFile.exists()){
+            //获取配置
+            AppConfig appConfig =
+                    commonMapper.getAppConfig();
+            ExcelData data = new ExcelData();
+            data.setName("餐补申请统计");
+            List<String> titles = new ArrayList();
+            titles.add("序号");
+            titles.add("加班人姓名");
+            titles.add("所在部门");
+            titles.add("加班日期");
+            titles.add("上班时间");
+            titles.add("下班时间");
+            titles.add("餐费（元）");
+            titles.add("总计(元）");
+            titles.add("备注");
+            titles.add("领款签收");
+            data.setTitles(titles);
+
+            //我们需要根据id来分组
+            Map<String, List<MealSupport>> groupList = new HashMap<>();
+            //获取所有本月需要申请餐补的数据
+            List<MealSupport> allUserMealSupport = mealSupportMapper.findAllUserMealSupport(now.getYear(), now.getMonthOfYear());
+            for ( MealSupport mealSupport : allUserMealSupport ) {
+                if ( groupList.containsKey(mealSupport.getUserId()) ) {
+                    List<MealSupport> mealSupportList = groupList.get(mealSupport.getUserId());
+                    mealSupportList.add(mealSupport);
+                    groupList.put(mealSupport.getUserId(), mealSupportList);
+                } else {
+                    List<MealSupport> mealSupportList = new ArrayList<>();
+                    mealSupportList.add(mealSupport);
+                    groupList.put(mealSupport.getUserId(), mealSupportList);
+                }
+            }
+            //遍历获取部门id
+            for ( Map.Entry<String, List<MealSupport>> entry : groupList.entrySet() ) {
+                String key = entry.getKey();
+                OapiUserGetResponse userInfo = CommRequest.getUserInfo(AccessTokenUtil.getToken(), key);
+                if ( userInfo != null ) {
+                    List<Long> department = userInfo.getDepartment();
+                    if ( department != null && !department.isEmpty() ) {
+                        StringBuilder stringBuilder = new StringBuilder();
+                        for ( Long departmentId : department ) {
+                            OapiDepartmentGetResponse departmentInfo = CommRequest.getDepartmentInfo(AccessTokenUtil.getToken(), departmentId + "");
+                            stringBuilder.append(departmentInfo.getName() + " ");
+                        }
+                        List<MealSupport> value = entry.getValue();
+                        for ( MealSupport mealSupport : value ) {
+                            mealSupport.setDepartmentName(stringBuilder.toString());
+                            mealSupport.setUserName(userInfo.getName());
+                        }
+                    }
+                }
+            }
+
+            int singleMoney = 20;
+            if ( appConfig != null ) {
+                singleMoney = appConfig.getMealMoney();
+            }
+
+            List<List<Object>> rows = new ArrayList();
+            int index = 1;
+            //遍历map中的值
+            for ( List<MealSupport> value : groupList.values() ) {
+                if ( value != null ) {
+                    Collections.sort(value, new Comparator<MealSupport>() {
+                        @Override
+                        public int compare(MealSupport o1, MealSupport o2) {
+                            return o1.getDay() - o2.getDay();
+                        }
+                    });
+                    int money = 0;
+                    for ( int i = 0; i < value.size(); i++ ) {
+                        MealSupport mealSupport = value.get(i);
+                        money += singleMoney;
+                        List<Object> row = new ArrayList();
+                        row.add(index);
+                        row.add(mealSupport.getUserName());
+                        row.add(mealSupport.getDepartmentName());
+                        row.add(mealSupport.getYear() + "-" + TimeUtils.formatInt(mealSupport.getMonth()) + "-" + TimeUtils.formatInt(mealSupport.getDay()));
+                        row.add(mealSupport.getOnduty());
+                        row.add(mealSupport.getOffduty());
+                        row.add(singleMoney);
+                        if ( i == value.size() - 1 )
+                            row.add(money);
+                        row.add("");
+                        row.add("");
+                        rows.add(row);
+                        index++;
+                    }
+                }
+            }
+
+            data.setRows(rows);
+
+            //生成本地
+            try {
+                FileOutputStream out = new FileOutputStream(aimFile);
+                ExcelUtils.exportExcel(data, out);
+                out.close();
+            } catch ( Exception e ) {
+                e.printStackTrace();
+            }
         }
 
         for ( UserManager userManager : allUserManager ) {

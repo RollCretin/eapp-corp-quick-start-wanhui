@@ -19,6 +19,7 @@ import com.dingtalk.api.DingTalkClient;
 import com.dingtalk.api.request.OapiAttendanceListRequest;
 import com.dingtalk.api.response.OapiAttendanceListResponse;
 import com.dingtalk.api.response.OapiUserGetResponse;
+import com.mapper.LogMapper;
 import com.mapper.RemindMapper;
 import com.mapper.UserMapper;
 import com.model.DailyDingInfo;
@@ -82,6 +83,8 @@ public class HomeController {
         String userId = AccessTokenUtil.getUserId(accessToken, request, authCode);
 
         System.out.println("authCode   " + authCode);
+
+        log(2, userId);
 
         OapiUserGetResponse userInfo = CommRequest.getUserInfo(accessToken, userId);
         if ( userInfo != null && !StringUtils.isEmpty(userInfo.getAvatar()) ) {
@@ -258,5 +261,13 @@ public class HomeController {
                 }
             }
         }
+    }
+
+    @Autowired
+    private LogMapper logMapper;
+
+    //跟踪记录 0 首页 1 统计详情
+    private void log(int type, String user_id) {
+        logMapper.insert(user_id, type);
     }
 }

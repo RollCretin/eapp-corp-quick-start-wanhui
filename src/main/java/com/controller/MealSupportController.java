@@ -16,6 +16,7 @@ import com.dingtalk.api.DingTalkClient;
 import com.dingtalk.api.request.OapiAttendanceListRequest;
 import com.dingtalk.api.response.OapiAttendanceListResponse;
 import com.mapper.CommonMapper;
+import com.mapper.LogMapper;
 import com.mapper.MealSupportMapper;
 import com.model.DailyDingInfo;
 import com.model.domain.AppConfig;
@@ -73,6 +74,7 @@ public class MealSupportController {
         String accessToken = AccessTokenUtil.getToken();
         String userId = AccessTokenUtil.getUserId(accessToken, request, authCode);
         DateTime now = DateTime.now();
+        log(3, userId);
         MealSupport aimMealSupport = mealSupportMapper.getAimMealSupport(userId, now.getYear(), now.getMonthOfYear(), day);
         List<MealSupport> list = getMonthAvaiableData(userId, accessToken);
         //查询所有的数据
@@ -445,8 +447,16 @@ public class MealSupportController {
         Collections.sort(list, new Comparator<MealSupportChildResp>() {
             @Override
             public int compare(MealSupportChildResp o1, MealSupportChildResp o2) {
-                return o1.getDay() - o2.getDay();
+                return o2.getDay() - o1.getDay();
             }
         });
+    }
+
+    @Autowired
+    private LogMapper logMapper;
+
+    //跟踪记录 0 首页 1 统计详情
+    private void log(int type, String user_id) {
+        logMapper.insert(user_id, type);
     }
 }
