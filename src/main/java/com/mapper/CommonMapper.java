@@ -43,4 +43,12 @@ public interface CommonMapper {
      */
     @Select( "select * from t_user_manager where status = 1" )
     List<UserManager> getAllUserManager();
+
+    /**
+     * 判断指定id的用户是否存在
+     *
+     * @return
+     */
+    @Select( "select count(*) count from t_user_manager where user_id = #{userId}" )
+    int getUserByUserId(String userId);
 }

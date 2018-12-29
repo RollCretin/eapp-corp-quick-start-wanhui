@@ -7,6 +7,7 @@ import com.dingtalk.api.DingTalkClient;
 import com.dingtalk.api.request.OapiMessageCorpconversationAsyncsendV2Request;
 import com.mapper.MonthTimeMapper;
 import com.mapper.RemindMapper;
+import com.mapper.UserMapper;
 import com.model.domain.MonthTime;
 import com.model.domain.Remind;
 import com.taobao.api.ApiException;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Component;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -33,52 +35,55 @@ public class NotifyScheduledService {
     @Autowired
     private MonthTimeMapper monthTimeMapper;
 
+    @Autowired
+    private UserMapper userMapper;
+
     //针对晚上18：30下班的人
-    @Scheduled( cron = "0 30 18 * * *" )
-    public void scheduled() {
-        //在这里发送消息
-        List<Remind> allReminds = remindMapper.findAllReminds();
-        if ( allReminds == null || allReminds.isEmpty() )
-            return;
-
-        DateTime now = DateTime.now();
-        String yearMonth = now.getYear() + (now.getMonthOfYear() < 10 ? ("0" + now.getMonthOfYear()) : (now.getMonthOfYear() + ""));
-        DateBean dates = DateConfig.getDates(yearMonth);
-        if ( !dates.isTodayInWork() ) {
-            return;
-        }
-
-        int times = allReminds.size() / 20 + 1;
-        if ( allReminds.size() % 20 == 0 ) {
-            times--;
-        }
-
-        for ( int i = 0; i < times; i++ ) {
-            if ( i == times - 1 ) {
-                //最后一次
-                StringBuilder builder = new StringBuilder();
-                String userIds = "";
-                for ( int j = 0; j < allReminds.size() % 20; j++ ) {
-                    builder.append(allReminds.get(i * 20 + j).getUserId() + ",");
-                }
-                if ( !builder.toString().equals("") ) {
-                    userIds = builder.substring(0, builder.length() - 1);
-                }
-                sendMsg(userIds);
-            } else {
-                //正常情况
-                StringBuilder builder = new StringBuilder();
-                String userIds = "";
-                for ( int j = 0; j < 20; j++ ) {
-                    builder.append(allReminds.get(i * 20 + j).getUserId() + ",");
-                }
-                if ( !builder.toString().equals("") ) {
-                    userIds = builder.substring(0, builder.length() - 1);
-                }
-                sendMsg(userIds);
-            }
-        }
-    }
+//    @Scheduled( cron = "0 30 18 * * *" )
+//    public void scheduled() {
+//        //在这里发送消息
+//        List<Remind> allReminds = remindMapper.findAllReminds();
+//        if ( allReminds == null || allReminds.isEmpty() )
+//            return;
+//
+//        DateTime now = DateTime.now();
+//        String yearMonth = now.getYear() + (now.getMonthOfYear() < 10 ? ("0" + now.getMonthOfYear()) : (now.getMonthOfYear() + ""));
+//        DateBean dates = DateConfig.getDates(yearMonth);
+//        if ( !dates.isTodayInWork() ) {
+//            return;
+//        }
+//
+//        int times = allReminds.size() / 20 + 1;
+//        if ( allReminds.size() % 20 == 0 ) {
+//            times--;
+//        }
+//
+//        for ( int i = 0; i < times; i++ ) {
+//            if ( i == times - 1 ) {
+//                //最后一次
+//                StringBuilder builder = new StringBuilder();
+//                String userIds = "";
+//                for ( int j = 0; j < allReminds.size() % 20; j++ ) {
+//                    builder.append(allReminds.get(i * 20 + j).getUserId() + ",");
+//                }
+//                if ( !builder.toString().equals("") ) {
+//                    userIds = builder.substring(0, builder.length() - 1);
+//                }
+//                sendMsg(userIds);
+//            } else {
+//                //正常情况
+//                StringBuilder builder = new StringBuilder();
+//                String userIds = "";
+//                for ( int j = 0; j < 20; j++ ) {
+//                    builder.append(allReminds.get(i * 20 + j).getUserId() + ",");
+//                }
+//                if ( !builder.toString().equals("") ) {
+//                    userIds = builder.substring(0, builder.length() - 1);
+//                }
+//                sendMsg(userIds);
+//            }
+//        }
+//    }
 
 //    @Scheduled( cron = "0 30 18 * * FRI" )
 //    public void scheduledTime() {
@@ -93,6 +98,47 @@ public class NotifyScheduledService {
 //            return;
 //        sendBackMsg(monthTimeComfigs);
 //    }
+
+    /**
+     * 全局发送餐补申请的通知
+     */
+    public static void sendMealSupportMsg(UserMapper userMapper, String title, String content) {
+        //在这里发送消息
+        List<String> allUserIds = userMapper.getAllUserIds();
+        if ( allUserIds == null || allUserIds.isEmpty() )
+            return;
+
+        int times = allUserIds.size() / 20 + 1;
+        if ( allUserIds.size() % 20 == 0 ) {
+            times--;
+        }
+
+        for ( int i = 0; i < times; i++ ) {
+            if ( i == times - 1 ) {
+                //最后一次
+                StringBuilder builder = new StringBuilder();
+                String userIds = "";
+                for ( int j = 0; j < allUserIds.size() % 20; j++ ) {
+                    builder.append(allUserIds.get(i * 20 + j) + ",");
+                }
+                if ( !builder.toString().equals("") ) {
+                    userIds = builder.substring(0, builder.length() - 1);
+                }
+                sendCommonMsg(userIds, title, content);
+            } else {
+                //正常情况
+                StringBuilder builder = new StringBuilder();
+                String userIds = "";
+                for ( int j = 0; j < 20; j++ ) {
+                    builder.append(allUserIds.get(i * 20 + j) + ",");
+                }
+                if ( !builder.toString().equals("") ) {
+                    userIds = builder.substring(0, builder.length() - 1);
+                }
+                sendCommonMsg(userIds, title, content);
+            }
+        }
+    }
 
     @Async( "processExecutor" )
     public void sendBackMsg(List<MonthTime> monthTimeComfigs) {
@@ -127,6 +173,32 @@ public class NotifyScheduledService {
         }
         msg.getActionCard().setSingleUrl("http://www.cretinzp.com:8011/notice_ding.html");
         msg.setMsgtype("action_card");
+        request.setMsg(msg);
+
+        try {
+            client.execute(request, accessToken);
+        } catch ( ApiException e ) {
+            e.printStackTrace();
+        }
+    }
+
+    //发送消息
+    private static void sendCommonMsg(String userIds, String title, String content) {
+        String accessToken = AccessTokenUtil.getToken();
+        DingTalkClient client = new DefaultDingTalkClient("https://oapi.dingtalk.com/topapi/message/corpconversation/asyncsend_v2");
+        OapiMessageCorpconversationAsyncsendV2Request request = new OapiMessageCorpconversationAsyncsendV2Request();
+        request.setUseridList(userIds);
+        request.setAgentId(199355094l);
+        request.setToAllUser(false);
+
+        OapiMessageCorpconversationAsyncsendV2Request.Msg msg = new OapiMessageCorpconversationAsyncsendV2Request.Msg();
+
+        msg.setMsgtype("markdown");
+        msg.setMarkdown(new OapiMessageCorpconversationAsyncsendV2Request.Markdown());
+        msg.getMarkdown().setTitle(DateTime.now().toString("HH:mm") + " 您有新消息，请查收");
+
+
+        msg.getMarkdown().setText("### " + title + "\n##### " + content);
         request.setMsg(msg);
 
         try {

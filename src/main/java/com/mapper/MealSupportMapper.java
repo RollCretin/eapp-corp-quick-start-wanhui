@@ -11,6 +11,7 @@
 package com.mapper;
 
 import com.mapper.provider.MealDAOProvider;
+import com.model.domain.ManageMeal;
 import com.model.domain.MealSupport;
 import com.model.domain.MonthTime;
 
@@ -47,6 +48,7 @@ public interface MealSupportMapper {
 
     /**
      * 获取本月的所有餐补信息
+     *
      * @param year
      * @param month
      * @return
@@ -98,4 +100,15 @@ public interface MealSupportMapper {
                                   @Param( "year" ) int year,
                                   @Param( "month" ) int month,
                                   @Param( "day" ) int day);
+
+    /**
+     * 管理员获取餐补人员列表
+     *
+     * @param year
+     * @param month
+     * @return
+     */
+    @Select( "select user_id,year,month,count(user_id) times, (select user_name from t_user where id=meal.user_id) username from t_meal_supplement as meal where year=#{year} and month=#{month} group by user_id " )
+    List<ManageMeal> getManageMealList(@Param( "year" ) int year,
+                                       @Param( "month" ) int month);
 }

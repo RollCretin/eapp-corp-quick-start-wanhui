@@ -43,6 +43,17 @@ public class HomeMainResp {
     //昵称
     private String nickname;
 
+    //显示发送通知按钮
+    private boolean showNoticeBtn;
+
+    public boolean isShowNoticeBtn() {
+        return showNoticeBtn;
+    }
+
+    public void setShowNoticeBtn(boolean showNoticeBtn) {
+        this.showNoticeBtn = showNoticeBtn;
+    }
+
     public List<UserMainInfoModel.DingModel> getTodayDing() {
         return todayDing;
     }

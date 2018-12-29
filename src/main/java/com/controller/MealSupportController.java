@@ -25,6 +25,7 @@ import com.model.response.MealSupportChildResp;
 import com.model.response.MealSupportResp;
 import com.taobao.api.ApiException;
 import com.util.AccessTokenUtil;
+import com.util.CommRequest;
 import com.util.ServiceResult;
 import com.util.StringUtils;
 import com.util.TimeUtils;
@@ -76,7 +77,14 @@ public class MealSupportController {
         DateTime now = DateTime.now();
         log(3, userId);
         MealSupport aimMealSupport = mealSupportMapper.getAimMealSupport(userId, now.getYear(), now.getMonthOfYear(), day);
-        List<MealSupport> list = getMonthAvaiableData(userId, accessToken);
+        AppConfig appConfig = commonMapper.getAppConfig();
+        int hour = 21;
+        int minute = 0;
+        if ( appConfig != null ) {
+            hour = appConfig.getHour();
+            minute = appConfig.getMiniute();
+        }
+        List<MealSupport> list = getMonthAvaiableData(userId, accessToken, hour, minute);
         //查询所有的数据
         List<MealSupport> mealSupports = mealSupportMapper.findMealSupport(userId, now.getYear(), now.getMonthOfYear());
         List<MealSupportChildResp> respList = new ArrayList<>();
@@ -105,7 +113,7 @@ public class MealSupportController {
             }
             respList.add(mealSupportResp);
         }
-        sort(respList);
+        CommRequest.sort(respList);
         MealSupportResp resp = new MealSupportResp();
         resp.setList(respList);
         resp.setAllMoney(getAllMoney(respList));
@@ -157,7 +165,14 @@ public class MealSupportController {
         String userId = AccessTokenUtil.getUserId(accessToken, request, authCode);
         DateTime now = DateTime.now();
         MealSupport aimMealSupport = mealSupportMapper.getAimMealSupport(userId, now.getYear(), now.getMonthOfYear(), day);
-        List<MealSupport> list = getMonthAvaiableData(userId, accessToken);
+        AppConfig appConfig = commonMapper.getAppConfig();
+        int hour = 21;
+        int minute = 0;
+        if ( appConfig != null ) {
+            hour = appConfig.getHour();
+            minute = appConfig.getMiniute();
+        }
+        List<MealSupport> list = getMonthAvaiableData(userId, accessToken, hour, minute);
         //查询所有的数据
         List<MealSupport> mealSupports = mealSupportMapper.findMealSupport(userId, now.getYear(), now.getMonthOfYear());
         List<MealSupportChildResp> respList = new ArrayList<>();
@@ -188,7 +203,7 @@ public class MealSupportController {
             }
             respList.add(mealSupportResp);
         }
-        sort(respList);
+        CommRequest.sort(respList);
         MealSupportResp resp = new MealSupportResp();
         resp.setList(respList);
         resp.setAllMoney(getAllMoney(respList));
@@ -231,7 +246,14 @@ public class MealSupportController {
                                                       HttpServletRequest request) {
         String accessToken = AccessTokenUtil.getToken();
         String userId = AccessTokenUtil.getUserId(accessToken, request, authCode);
-        List<MealSupport> list = getMonthAvaiableData(userId, accessToken);
+        AppConfig appConfig = commonMapper.getAppConfig();
+        int hour = 21;
+        int minute = 0;
+        if ( appConfig != null ) {
+            hour = appConfig.getHour();
+            minute = appConfig.getMiniute();
+        }
+        List<MealSupport> list = getMonthAvaiableData(userId, accessToken, hour, minute);
         //查询所有的数据
         DateTime now = DateTime.now();
         List<MealSupport> mealSupports = mealSupportMapper.findMealSupport(userId, now.getYear(), now.getMonthOfYear());
@@ -269,7 +291,7 @@ public class MealSupportController {
                 respList.add(mealSupportResp1);
             }
         }
-        sort(respList);
+        CommRequest.sort(respList);
         MealSupportResp resp = new MealSupportResp();
         resp.setList(respList);
         resp.setAllMoney(getAllMoney(respList));
@@ -289,7 +311,14 @@ public class MealSupportController {
                                                            HttpServletRequest request) {
         String accessToken = AccessTokenUtil.getToken();
         String userId = AccessTokenUtil.getUserId(accessToken, request, authCode);
-        List<MealSupport> list = getMonthAvaiableData(userId, accessToken);
+        AppConfig appConfig = commonMapper.getAppConfig();
+        int hour = 21;
+        int minute = 0;
+        if ( appConfig != null ) {
+            hour = appConfig.getHour();
+            minute = appConfig.getMiniute();
+        }
+        List<MealSupport> list = getMonthAvaiableData(userId, accessToken, hour, minute);
         //查询所有的数据
         DateTime now = DateTime.now();
         List<MealSupport> mealSupports = mealSupportMapper.findMealSupport(userId, now.getYear(), now.getMonthOfYear());
@@ -308,7 +337,7 @@ public class MealSupportController {
             }
             respList.add(mealSupportResp);
         }
-        sort(respList);
+        CommRequest.sort(respList);
         MealSupportResp resp = new MealSupportResp();
         resp.setList(respList);
         resp.setDate(now.toString("yyyy年MM月"));
@@ -316,7 +345,7 @@ public class MealSupportController {
         return ServiceResult.success(resp);
     }
 
-    private List<MealSupport> getMonthAvaiableData(String userId, String accessToken) {
+    private List<MealSupport> getMonthAvaiableData(String userId, String accessToken, int hour, int minute) {
         //获取到本月的打卡信息
         Map<String, List<DailyDingInfo>> map = getDingInfo(userId, accessToken);
         List<MealSupport> list = new ArrayList<>();
@@ -331,7 +360,7 @@ public class MealSupportController {
                     Date offDutyTime = getOffDutyTime(value);
                     if ( offDutyTime != null ) {
                         DateTime dateTime = new DateTime(offDutyTime);
-                        DateTime aimTime = new DateTime(dateTime.getYear(), dateTime.getMonthOfYear(), dateTime.getDayOfMonth(), 20, 0, 0);
+                        DateTime aimTime = new DateTime(dateTime.getYear(), dateTime.getMonthOfYear(), dateTime.getDayOfMonth(), hour, minute, 0);
                         if ( dateTime.isAfter(aimTime.getMillis()) ) {
                             //满足条件
                             MealSupport mealSupport = new MealSupport();
@@ -441,15 +470,6 @@ public class MealSupportController {
             }
         }
         return dailyDingInfoMap;
-    }
-
-    private void sort(List<MealSupportChildResp> list) {
-        Collections.sort(list, new Comparator<MealSupportChildResp>() {
-            @Override
-            public int compare(MealSupportChildResp o1, MealSupportChildResp o2) {
-                return o2.getDay() - o1.getDay();
-            }
-        });
     }
 
     @Autowired

@@ -8,6 +8,8 @@ import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface UserMapper {
 
@@ -43,4 +45,11 @@ public interface UserMapper {
      */
     @Update( {"update t_user set user_name=#{user_name},avatar=#{avatar},group_name=#{group_name} where id=#{id}"} )
     int update(@Param( "id" ) String id, @Param( "user_name" ) String user_name, @Param( "avatar" ) String avatar, @Param( "group_name" ) String group_name);
+
+    /**
+     * 获取所有用户的id
+     * @return
+     */
+    @Select( {"select id from t_user"} )
+    List<String> getAllUserIds();
 }

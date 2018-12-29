@@ -23,8 +23,28 @@ public class AppConfig {
     private int id;
     //餐补每顿的金额
     private int mealMoney;
+    //设置算加班的时间点 小时
+    private int hour;
+    //设置算加班的时间点 分钟
+    private int miniute;
     //更新时间
     private Date updateTime;
+
+    public int getHour() {
+        return hour;
+    }
+
+    public void setHour(int hour) {
+        this.hour = hour;
+    }
+
+    public int getMiniute() {
+        return miniute;
+    }
+
+    public void setMiniute(int miniute) {
+        this.miniute = miniute;
+    }
 
     public int getId() {
         return id;

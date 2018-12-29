@@ -19,6 +19,7 @@ import com.dingtalk.api.DingTalkClient;
 import com.dingtalk.api.request.OapiAttendanceListRequest;
 import com.dingtalk.api.response.OapiAttendanceListResponse;
 import com.dingtalk.api.response.OapiUserGetResponse;
+import com.mapper.CommonMapper;
 import com.mapper.LogMapper;
 import com.mapper.RemindMapper;
 import com.mapper.UserMapper;
@@ -73,6 +74,9 @@ public class HomeController {
     @Autowired
     private UserMapper userMapper;
 
+    @Autowired
+    private CommonMapper commonMapper;
+
     @RequestMapping( value = "/main", method = RequestMethod.POST )
     public ServiceResult<HomeMainResp> getMainData(@RequestParam( value = "authCode" ) String authCode,
                                                    HttpServletRequest request) {
@@ -114,6 +118,11 @@ public class HomeController {
             userMapper.insert(userId, userInfo.getName(), userInfo.getAvatar(), kaoqinzu);
         else {
             userMapper.update(userId, userInfo.getName(), userInfo.getAvatar(), kaoqinzu);
+        }
+
+        int userByUserId = commonMapper.getUserByUserId(userId);
+        if ( userByUserId != 0 ) {
+            homeMainResp.setShowNoticeBtn(true);
         }
 
         return ServiceResult.success(homeMainResp);

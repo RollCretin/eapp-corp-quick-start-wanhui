@@ -19,7 +19,12 @@ import com.dingtalk.api.request.OapiUserGetRequest;
 import com.dingtalk.api.response.OapiAttendanceGetusergroupResponse;
 import com.dingtalk.api.response.OapiDepartmentGetResponse;
 import com.dingtalk.api.response.OapiUserGetResponse;
+import com.model.response.MealSupportChildResp;
 import com.taobao.api.ApiException;
+
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * 〈通用请求〉
@@ -92,5 +97,14 @@ public class CommRequest {
             e.printStackTrace();
             return "获取考勤组失败";
         }
+    }
+
+    public static void sort(List<MealSupportChildResp> list) {
+        Collections.sort(list, new Comparator<MealSupportChildResp>() {
+            @Override
+            public int compare(MealSupportChildResp o1, MealSupportChildResp o2) {
+                return o2.getDay() - o1.getDay();
+            }
+        });
     }
 }
