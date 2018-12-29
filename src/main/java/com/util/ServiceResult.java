@@ -38,14 +38,14 @@ public class ServiceResult<T> implements Serializable {
     }
 
     public static <T> ServiceResult<T> failure() {
-        return failure("500", "请求超时，请稍后再试");
+        return failure("1", "请求超时，请稍后再试");
     }
 
-    public static <T> ServiceResult<T> failure(String errorCode) {
+    public static <T> ServiceResult<T> failure(String message) {
         ServiceResult<T> item = new ServiceResult<T>();
         item.success = false;
-        item.code = errorCode;
-        item.message = "failure";
+        item.code = "1";
+        item.message = message;
         return item;
     }
 

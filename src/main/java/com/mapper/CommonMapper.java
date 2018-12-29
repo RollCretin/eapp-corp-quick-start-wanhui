@@ -11,6 +11,7 @@
 package com.mapper;
 
 import com.model.domain.AppConfig;
+import com.model.domain.BlackUser;
 import com.model.domain.UserManager;
 
 import org.apache.ibatis.annotations.Select;
@@ -49,6 +50,23 @@ public interface CommonMapper {
      *
      * @return
      */
-    @Select( "select count(*) count from t_user_manager where user_id = #{userId}" )
+    @Select( "select count(*) count from t_user_manager where user_id = #{userId} and status = 1" )
     int getUserByUserId(String userId);
+
+    /**
+     * 获取不能申请餐补的人员列表
+     *
+     * @return
+     */
+    @Select( {"select * from t_user_black where status=1"} )
+    List<BlackUser> getAllBlackUser();
+
+    /**
+     * 查询当前用户是否在黑名单
+     *
+     * @param userId
+     * @return
+     */
+    @Select( {"select count(*) from t_user tu,t_user_black tub where tu.id=#{userId} and tu.user_name = tub.user_name and tub.status = 1"} )
+    int isUserInBlack(String userId);
 }

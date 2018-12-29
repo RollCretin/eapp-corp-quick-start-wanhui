@@ -72,4 +72,14 @@ public class DailyDingInfo {
     public void setDingTime(Date dingTime) {
         this.dingTime = dingTime;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        DailyDingInfo o = ( DailyDingInfo ) obj;
+        return o.getDingTime().equals(getDingTime()) &&
+                o.getDingType().equals(getDingType()) &&
+                o.getErrType() == getErrType() &&
+                o.getErrTypeDesc().equals(getErrTypeDesc()) &&
+                o.getDesc().equals(getDesc());
+    }
 }

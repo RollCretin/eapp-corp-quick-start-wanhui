@@ -79,7 +79,7 @@ public class StatisticsScheduledService {
             return;
         }
 
-        String fileName = "followme_" + DateTime.now().toString("yyyyMMdd") + ".xlsx";
+        String fileName = "followme_" + DateTime.now().toString("yyyyMMddHHmmsss") + ".xlsx";
         File file = new File(Constant.EXCEL_PATH);
         if ( !file.exists() && !file.isDirectory() ) {
             file.mkdirs();
@@ -94,7 +94,7 @@ public class StatisticsScheduledService {
             AppConfig appConfig =
                     commonMapper.getAppConfig();
             ExcelData data = new ExcelData();
-            data.setName("餐补申请统计");
+            data.setName(now.getYear()+"年"+now.getMonthOfYear()+"月餐补申请统计");
             List<String> titles = new ArrayList();
             titles.add("序号");
             titles.add("加班人姓名");
@@ -174,6 +174,9 @@ public class StatisticsScheduledService {
                         row.add(singleMoney);
                         if ( i == value.size() - 1 )
                             row.add(money);
+                        else {
+                            row.add("");
+                        }
                         row.add("");
                         row.add("");
                         rows.add(row);
@@ -195,7 +198,7 @@ public class StatisticsScheduledService {
         }
 
         for ( UserManager userManager : allUserManager ) {
-            sendEmail(userManager, now, fileName, 5);
+            sendEmail(mailService,userManager, now, fileName, 5);
         }
     }
 
@@ -207,19 +210,19 @@ public class StatisticsScheduledService {
      * @param fileName
      * @param times
      */
-    private void sendEmail(UserManager userManager, DateTime now, String fileName, int times) {
+    public static void sendEmail(MailService mailService,UserManager userManager, DateTime now, String fileName, int times) {
         try {
             //mico@followme.cn  792075058@qq.com
             mailService.sendMail(userManager.getEmail(),
                     "万汇互联" + now.toString("yyyy年MM月") + "员工餐补统计",
                     "尊敬的" + userManager.getUserName() + ":\n此邮件由打卡统计小程序自动生成，附件为"
                             + "万汇互联" + now.toString("yyyy年MM月") + "员工餐补统计Excel表，请查收。如遇文件打不开请联系我再次获取！\n"
-                            + now.toString("yyyy-MM-dd HH:mm:ss" + "\n"),
+                            + DateTime.now().toString("yyyy-MM-dd HH:mm:ss" + "\n"),
                     Constant.EXCEL_PATH + File.separatorChar + fileName);
         } catch ( Exception e ) {
             times--;
             if ( times > 0 ) {
-                sendEmail(userManager, now, fileName, times);
+                sendEmail(mailService,userManager, now, fileName, times);
             }
             e.printStackTrace();
         }

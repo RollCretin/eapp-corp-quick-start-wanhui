@@ -233,7 +233,8 @@ public class HomeController {
                     String desc = StringUtils.getDingTypeDesc(recordresult.getCheckType()) + " " + new DateTime(recordresult.getUserCheckTime()).toString(Constant.DATE_FORMAT + " ")
                             + StringUtils.getErrDesc(dingInfo.getErrType());
                     dingInfo.setDesc(desc);
-                    dingInfoList.add(dingInfo);
+                    if ( !dingInfoList.contains(dingInfo) )
+                        dingInfoList.add(dingInfo);
                 } else {
                     String timeResult = recordresult.getTimeResult();
                     if ( "Normal".equals(timeResult) ) {

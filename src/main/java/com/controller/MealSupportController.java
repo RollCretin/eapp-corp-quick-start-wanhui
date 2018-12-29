@@ -20,6 +20,7 @@ import com.mapper.LogMapper;
 import com.mapper.MealSupportMapper;
 import com.model.DailyDingInfo;
 import com.model.domain.AppConfig;
+import com.model.domain.BlackUser;
 import com.model.domain.MealSupport;
 import com.model.response.MealSupportChildResp;
 import com.model.response.MealSupportResp;
@@ -74,6 +75,10 @@ public class MealSupportController {
                                                  HttpServletRequest request) {
         String accessToken = AccessTokenUtil.getToken();
         String userId = AccessTokenUtil.getUserId(accessToken, request, authCode);
+        if ( checkUserType(userId) ) {
+            //是特殊用户
+            return ServiceResult.failure("很抱歉，您所在的班制不支持在线申请餐补，详情请联系行政部门");
+        }
         DateTime now = DateTime.now();
         log(3, userId);
         MealSupport aimMealSupport = mealSupportMapper.getAimMealSupport(userId, now.getYear(), now.getMonthOfYear(), day);
@@ -163,6 +168,10 @@ public class MealSupportController {
                                                 HttpServletRequest request) {
         String accessToken = AccessTokenUtil.getToken();
         String userId = AccessTokenUtil.getUserId(accessToken, request, authCode);
+        if ( checkUserType(userId) ) {
+            //是特殊用户
+            return ServiceResult.failure("很抱歉，您所在的班制不支持在线申请餐补，详情请联系行政部门");
+        }
         DateTime now = DateTime.now();
         MealSupport aimMealSupport = mealSupportMapper.getAimMealSupport(userId, now.getYear(), now.getMonthOfYear(), day);
         AppConfig appConfig = commonMapper.getAppConfig();
@@ -223,6 +232,10 @@ public class MealSupportController {
                                                        HttpServletRequest request) {
         String accessToken = AccessTokenUtil.getToken();
         String userId = AccessTokenUtil.getUserId(accessToken, request, authCode);
+        if ( checkUserType(userId) ) {
+            //是特殊用户
+            return ServiceResult.failure("很抱歉，您所在的班制不支持在线申请餐补，详情请联系行政部门");
+        }
         DateTime now = DateTime.now();
         try {
             mealSupportMapper.deleteAll(userId, now.getYear(), now.getMonthOfYear());
@@ -246,6 +259,10 @@ public class MealSupportController {
                                                       HttpServletRequest request) {
         String accessToken = AccessTokenUtil.getToken();
         String userId = AccessTokenUtil.getUserId(accessToken, request, authCode);
+        if ( checkUserType(userId) ) {
+            //是特殊用户
+            return ServiceResult.failure("很抱歉，您所在的班制不支持在线申请餐补，详情请联系行政部门");
+        }
         AppConfig appConfig = commonMapper.getAppConfig();
         int hour = 21;
         int minute = 0;
@@ -311,6 +328,10 @@ public class MealSupportController {
                                                            HttpServletRequest request) {
         String accessToken = AccessTokenUtil.getToken();
         String userId = AccessTokenUtil.getUserId(accessToken, request, authCode);
+        if ( checkUserType(userId) ) {
+            //是特殊用户
+            return ServiceResult.failure("很抱歉，您所在的班制不支持在线申请餐补，详情请联系行政部门");
+        }
         AppConfig appConfig = commonMapper.getAppConfig();
         int hour = 21;
         int minute = 0;
@@ -478,5 +499,20 @@ public class MealSupportController {
     //跟踪记录 0 首页 1 统计详情
     private void log(int type, String user_id) {
         logMapper.insert(user_id, type);
+    }
+
+    /**
+     * 检查此用户是否是特殊用户
+     *
+     * @return
+     */
+    private boolean checkUserType(String userId) {
+        int userInBlack = commonMapper.isUserInBlack(userId);
+        if ( userInBlack != 0 ) {
+            //在黑名单
+            return true;
+        } else {
+            return false;
+        }
     }
 }

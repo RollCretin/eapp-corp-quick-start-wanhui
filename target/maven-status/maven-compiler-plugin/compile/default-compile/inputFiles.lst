@@ -15,10 +15,13 @@
 /Users/cretin/MiniProjects/web/eapp-corp-quick-start/src/main/java/com/mapper/RemindMapper.java
 /Users/cretin/MiniProjects/web/eapp-corp-quick-start/src/main/java/com/model/response/HomeMainResp.java
 /Users/cretin/MiniProjects/web/eapp-corp-quick-start/src/main/java/com/config/DateConfig.java
+/Users/cretin/MiniProjects/web/eapp-corp-quick-start/src/main/java/com/controller/ManagerController.java
 /Users/cretin/MiniProjects/web/eapp-corp-quick-start/src/main/java/com/model/response/MealSupportResp.java
 /Users/cretin/MiniProjects/web/eapp-corp-quick-start/src/main/java/com/mapper/MonthTimeMapper.java
 /Users/cretin/MiniProjects/web/eapp-corp-quick-start/src/main/java/com/config/DateBean.java
 /Users/cretin/MiniProjects/web/eapp-corp-quick-start/src/main/java/com/mapper/MealSupportMapper.java
+/Users/cretin/MiniProjects/web/eapp-corp-quick-start/src/main/java/com/model/domain/BlackUser.java
+/Users/cretin/MiniProjects/web/eapp-corp-quick-start/src/main/java/com/model/domain/ManageMeal.java
 /Users/cretin/MiniProjects/web/eapp-corp-quick-start/src/main/java/com/service/HttpClient.java
 /Users/cretin/MiniProjects/web/eapp-corp-quick-start/src/main/java/com/mapper/CommonMapper.java
 /Users/cretin/MiniProjects/web/eapp-corp-quick-start/src/main/java/com/model/domain/MealSupport.java
