@@ -76,10 +76,6 @@ public class DailyDingInfo {
     @Override
     public boolean equals(Object obj) {
         DailyDingInfo o = ( DailyDingInfo ) obj;
-        return o.getDingTime().equals(getDingTime()) &&
-                o.getDingType().equals(getDingType()) &&
-                o.getErrType() == getErrType() &&
-                o.getErrTypeDesc().equals(getErrTypeDesc()) &&
-                o.getDesc().equals(getDesc());
+        return o.getDingTime().equals(getDingTime());
     }
 }

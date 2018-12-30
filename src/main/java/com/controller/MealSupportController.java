@@ -372,7 +372,7 @@ public class MealSupportController {
         List<MealSupport> list = new ArrayList<>();
         for ( Map.Entry<String, List<DailyDingInfo>> entry : map.entrySet() ) {
             List<DailyDingInfo> value = entry.getValue();
-            if ( value != null && value.size() == 2 ) {
+            if ( value != null && value.size() >= 2 ) {
                 DailyDingInfo dailyDingInfo = value.get(0);
                 DailyDingInfo dailyDingInfo2 = value.get(1);
                 if ( dailyDingInfo.getErrType() == 0
@@ -483,10 +483,12 @@ public class MealSupportController {
             String key = thisDay.getYear() + "-" + TimeUtils.formatInt(thisDay.getMonthOfYear()) + "-" + TimeUtils.formatInt(thisDay.getDayOfMonth());
             if ( dailyDingInfoMap.containsKey(key) ) {
                 List<DailyDingInfo> list = dailyDingInfoMap.get(key);
-                list.add(dingInfo);
+                if ( !list.contains(dingInfo) )
+                    list.add(dingInfo);
             } else {
                 List<DailyDingInfo> list = new ArrayList<>();
-                list.add(dingInfo);
+                if ( !list.contains(dingInfo) )
+                    list.add(dingInfo);
                 dailyDingInfoMap.put(key, list);
             }
         }
