@@ -24,6 +24,26 @@ public class MealSupportResp {
     private String date;
     //已申请money
     private String allMoney;
+    //是否可以申请上个月的餐补
+    private boolean showHistory;
+    //可用日期
+    private List<String> availableDate;
+
+    public boolean isShowHistory() {
+        return showHistory;
+    }
+
+    public List<String> getAvailableDate() {
+        return availableDate;
+    }
+
+    public void setAvailableDate(List<String> availableDate) {
+        this.availableDate = availableDate;
+    }
+
+    public void setShowHistory(boolean showHistory) {
+        this.showHistory = showHistory;
+    }
 
     public String getAllMoney() {
         return allMoney;

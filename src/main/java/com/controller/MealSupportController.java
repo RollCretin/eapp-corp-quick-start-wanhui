@@ -20,7 +20,6 @@ import com.mapper.LogMapper;
 import com.mapper.MealSupportMapper;
 import com.model.DailyDingInfo;
 import com.model.domain.AppConfig;
-import com.model.domain.BlackUser;
 import com.model.domain.MealSupport;
 import com.model.response.MealSupportChildResp;
 import com.model.response.MealSupportResp;
@@ -40,10 +39,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.sql.Time;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -70,7 +68,17 @@ public class MealSupportController {
     @Autowired
     private CommonMapper commonMapper;
 
+    /**
+     * 取消申请餐补
+     *
+     * @param authCode
+     * @param day
+     * @param request
+     * @return
+     */
     public ServiceResult<MealSupportResp> cancel(@RequestParam( value = "authCode" ) String authCode,
+                                                 @RequestParam( value = "year", defaultValue = "2018" ) int year,
+                                                 @RequestParam( value = "month", defaultValue = "12" ) int month,
                                                  @RequestParam( value = "day" ) int day,
                                                  HttpServletRequest request) {
         String accessToken = AccessTokenUtil.getToken();
@@ -79,9 +87,8 @@ public class MealSupportController {
             //是特殊用户
             return ServiceResult.failure("很抱歉，您所在的班制不支持在线申请餐补，详情请联系行政部门");
         }
-        DateTime now = DateTime.now();
         log(3, userId);
-        MealSupport aimMealSupport = mealSupportMapper.getAimMealSupport(userId, now.getYear(), now.getMonthOfYear(), day);
+        MealSupport aimMealSupport = mealSupportMapper.getAimMealSupport(userId, year, month, day);
         AppConfig appConfig = commonMapper.getAppConfig();
         int hour = 21;
         int minute = 0;
@@ -89,9 +96,9 @@ public class MealSupportController {
             hour = appConfig.getHour();
             minute = appConfig.getMiniute();
         }
-        List<MealSupport> list = getMonthAvaiableData(userId, accessToken, hour, minute);
+        List<MealSupport> list = getMonthAvaiableData(userId, accessToken, hour, minute, year, month);
         //查询所有的数据
-        List<MealSupport> mealSupports = mealSupportMapper.findMealSupport(userId, now.getYear(), now.getMonthOfYear());
+        List<MealSupport> mealSupports = mealSupportMapper.findMealSupport(userId, year, month);
         List<MealSupportChildResp> respList = new ArrayList<>();
         for ( MealSupport mealSupport : list ) {
             MealSupportChildResp mealSupportResp = new MealSupportChildResp();
@@ -122,7 +129,7 @@ public class MealSupportController {
         MealSupportResp resp = new MealSupportResp();
         resp.setList(respList);
         resp.setAllMoney(getAllMoney(respList));
-        resp.setDate(now.toString("yyyy年MM月"));
+        resp.setDate(TimeUtils.formatInt(year) + "年" + TimeUtils.formatInt(month) + "月");
         return ServiceResult.success(resp);
     }
 
@@ -142,19 +149,35 @@ public class MealSupportController {
         return money + "";
     }
 
+    /**
+     * 申请指定的餐补
+     *
+     * @param authCode
+     * @param day
+     * @param status
+     * @param request
+     * @return
+     */
     @RequestMapping( value = "/apply", method = RequestMethod.POST )
     public ServiceResult<MealSupportResp> applyOrCancel(@RequestParam( value = "authCode" ) String authCode,
+                                                        @RequestParam( value = "year", defaultValue = "2018" ) int year,
+                                                        @RequestParam( value = "month", defaultValue = "12" ) int month,
                                                         @RequestParam( value = "day" ) int day,
                                                         @RequestParam( value = "status" ) int status,
                                                         HttpServletRequest request) {
         if ( status == 1 ) {
             //申请
-            return apply(authCode, day, request);
+            return apply(authCode, year, month, day, request);
         } else {
             //取消
-            return cancel(authCode, day, request);
+            return cancel(authCode, year, month, day, request);
         }
     }
+
+//    @RequestMapping( value = "/apply", method = RequestMethod.POST )
+//    public ServiceResult historyList(){
+//
+//    }
 
     /**
      * 申请单个日期
@@ -164,6 +187,8 @@ public class MealSupportController {
      * @return
      */
     public ServiceResult<MealSupportResp> apply(@RequestParam( value = "authCode" ) String authCode,
+                                                @RequestParam( value = "year", defaultValue = "2018" ) int year,
+                                                @RequestParam( value = "month", defaultValue = "12" ) int month,
                                                 @RequestParam( value = "day" ) int day,
                                                 HttpServletRequest request) {
         String accessToken = AccessTokenUtil.getToken();
@@ -172,8 +197,7 @@ public class MealSupportController {
             //是特殊用户
             return ServiceResult.failure("很抱歉，您所在的班制不支持在线申请餐补，详情请联系行政部门");
         }
-        DateTime now = DateTime.now();
-        MealSupport aimMealSupport = mealSupportMapper.getAimMealSupport(userId, now.getYear(), now.getMonthOfYear(), day);
+        MealSupport aimMealSupport = mealSupportMapper.getAimMealSupport(userId, year, month, day);
         AppConfig appConfig = commonMapper.getAppConfig();
         int hour = 21;
         int minute = 0;
@@ -181,9 +205,9 @@ public class MealSupportController {
             hour = appConfig.getHour();
             minute = appConfig.getMiniute();
         }
-        List<MealSupport> list = getMonthAvaiableData(userId, accessToken, hour, minute);
+        List<MealSupport> list = getMonthAvaiableData(userId, accessToken, hour, minute, year, month);
         //查询所有的数据
-        List<MealSupport> mealSupports = mealSupportMapper.findMealSupport(userId, now.getYear(), now.getMonthOfYear());
+        List<MealSupport> mealSupports = mealSupportMapper.findMealSupport(userId, year, month);
         List<MealSupportChildResp> respList = new ArrayList<>();
         for ( MealSupport mealSupport : list ) {
             MealSupportChildResp mealSupportResp = new MealSupportChildResp();
@@ -216,7 +240,7 @@ public class MealSupportController {
         MealSupportResp resp = new MealSupportResp();
         resp.setList(respList);
         resp.setAllMoney(getAllMoney(respList));
-        resp.setDate(now.toString("yyyy年MM月"));
+        resp.setDate(TimeUtils.formatInt(year) + "年" + TimeUtils.formatInt(month) + "月");
         return ServiceResult.success(resp);
     }
 
@@ -229,6 +253,8 @@ public class MealSupportController {
      */
     @RequestMapping( value = "/onekey/cancel", method = RequestMethod.POST )
     public ServiceResult<MealSupportResp> oneKeyCancel(@RequestParam( value = "authCode" ) String authCode,
+                                                       @RequestParam( value = "year", defaultValue = "2018" ) int year,
+                                                       @RequestParam( value = "month", defaultValue = "12" ) int month,
                                                        HttpServletRequest request) {
         String accessToken = AccessTokenUtil.getToken();
         String userId = AccessTokenUtil.getUserId(accessToken, request, authCode);
@@ -236,14 +262,13 @@ public class MealSupportController {
             //是特殊用户
             return ServiceResult.failure("很抱歉，您所在的班制不支持在线申请餐补，详情请联系行政部门");
         }
-        DateTime now = DateTime.now();
         try {
-            mealSupportMapper.deleteAll(userId, now.getYear(), now.getMonthOfYear());
+            mealSupportMapper.deleteAll(userId, year, month);
         } catch ( Exception e ) {
             return ServiceResult.failure("请求超时，请稍后再试");
         }
         //清除所有的数据
-        ServiceResult<MealSupportResp> availableData = getAvailableData(authCode, request);
+        ServiceResult<MealSupportResp> availableData = getAvailableData(authCode, year, month, request);
         return availableData;
     }
 
@@ -256,6 +281,8 @@ public class MealSupportController {
      */
     @RequestMapping( value = "/onekey/apply", method = RequestMethod.POST )
     public ServiceResult<MealSupportResp> oneKeyApply(@RequestParam( value = "authCode" ) String authCode,
+                                                      @RequestParam( value = "year", defaultValue = "2018" ) int year,
+                                                      @RequestParam( value = "month", defaultValue = "12" ) int month,
                                                       HttpServletRequest request) {
         String accessToken = AccessTokenUtil.getToken();
         String userId = AccessTokenUtil.getUserId(accessToken, request, authCode);
@@ -270,10 +297,9 @@ public class MealSupportController {
             hour = appConfig.getHour();
             minute = appConfig.getMiniute();
         }
-        List<MealSupport> list = getMonthAvaiableData(userId, accessToken, hour, minute);
+        List<MealSupport> list = getMonthAvaiableData(userId, accessToken, hour, minute, year, month);
         //查询所有的数据
-        DateTime now = DateTime.now();
-        List<MealSupport> mealSupports = mealSupportMapper.findMealSupport(userId, now.getYear(), now.getMonthOfYear());
+        List<MealSupport> mealSupports = mealSupportMapper.findMealSupport(userId, year, month);
         List<MealSupport> mealSupportResp = new ArrayList<>();
         for ( MealSupport mealSupport : list ) {
             if ( mealSupports != null && !mealSupports.isEmpty() ) {
@@ -295,7 +321,7 @@ public class MealSupportController {
         try {
             if ( !mealSupportResp.isEmpty() )
                 mealSupportMapper.insertAll(mealSupportResp);
-            mealSupports = mealSupportMapper.findMealSupport(userId, now.getYear(), now.getMonthOfYear());
+            mealSupports = mealSupportMapper.findMealSupport(userId, year, month);
         } catch ( Exception e ) {
             return ServiceResult.failure("请求超时，请稍后再试");
         }
@@ -312,7 +338,7 @@ public class MealSupportController {
         MealSupportResp resp = new MealSupportResp();
         resp.setList(respList);
         resp.setAllMoney(getAllMoney(respList));
-        resp.setDate(now.toString("yyyy年MM月"));
+        resp.setDate(TimeUtils.formatInt(year) + "年" + TimeUtils.formatInt(month) + "月");
         return ServiceResult.success(resp);
     }
 
@@ -325,9 +351,26 @@ public class MealSupportController {
      */
     @RequestMapping( value = "/list", method = RequestMethod.POST )
     public ServiceResult<MealSupportResp> getAvailableData(@RequestParam( value = "authCode" ) String authCode,
+                                                           @RequestParam( value = "year", defaultValue = "2018" ) int year,
+                                                           @RequestParam( value = "month", defaultValue = "12" ) int month,
                                                            HttpServletRequest request) {
+        MealSupportResp resp = new MealSupportResp();
         String accessToken = AccessTokenUtil.getToken();
         String userId = AccessTokenUtil.getUserId(accessToken, request, authCode);
+        resp.setShowHistory(true);
+        List<String> availableDate = new ArrayList<>();
+        //说明是第一次进来
+        DateTime today = DateTime.now();
+        if ( today.isAfter(new DateTime(today.getYear(), today.getMonthOfYear(), 5, 10, 0, 0)) ) {
+            //过了次月的5号上午10点 不能在申请了
+            resp.setShowHistory(false);
+            availableDate.add(TimeUtils.formatInt(today.getYear()) + "-" + TimeUtils.formatInt(today.getMonthOfYear()));
+        } else {
+            availableDate.add(TimeUtils.formatInt(today.getYear()) + "-" + TimeUtils.formatInt(today.getMonthOfYear()));
+            today = today.minusMonths(1);
+            availableDate.add(TimeUtils.formatInt(today.getYear()) + "-" + TimeUtils.formatInt(today.getMonthOfYear()));
+        }
+        resp.setAvailableDate(availableDate);
         if ( checkUserType(userId) ) {
             //是特殊用户
             return ServiceResult.failure("很抱歉，您所在的班制不支持在线申请餐补，详情请联系行政部门");
@@ -339,10 +382,9 @@ public class MealSupportController {
             hour = appConfig.getHour();
             minute = appConfig.getMiniute();
         }
-        List<MealSupport> list = getMonthAvaiableData(userId, accessToken, hour, minute);
+        List<MealSupport> list = getMonthAvaiableData(userId, accessToken, hour, minute, year, month);
         //查询所有的数据
-        DateTime now = DateTime.now();
-        List<MealSupport> mealSupports = mealSupportMapper.findMealSupport(userId, now.getYear(), now.getMonthOfYear());
+        List<MealSupport> mealSupports = mealSupportMapper.findMealSupport(userId, year, month);
         List<MealSupportChildResp> respList = new ArrayList<>();
         for ( MealSupport mealSupport : list ) {
             MealSupportChildResp mealSupportResp = new MealSupportChildResp();
@@ -359,16 +401,16 @@ public class MealSupportController {
             respList.add(mealSupportResp);
         }
         CommRequest.sort(respList);
-        MealSupportResp resp = new MealSupportResp();
+
         resp.setList(respList);
-        resp.setDate(now.toString("yyyy年MM月"));
+        resp.setDate(TimeUtils.formatInt(year) + "年" + TimeUtils.formatInt(month) + "月");
         resp.setAllMoney(getAllMoney(respList));
         return ServiceResult.success(resp);
     }
 
-    private List<MealSupport> getMonthAvaiableData(String userId, String accessToken, int hour, int minute) {
+    private List<MealSupport> getMonthAvaiableData(String userId, String accessToken, int hour, int minute, int year, int month) {
         //获取到本月的打卡信息
-        Map<String, List<DailyDingInfo>> map = getDingInfo(userId, accessToken);
+        Map<String, List<DailyDingInfo>> map = getDingInfo(userId, accessToken, year, month);
         List<MealSupport> list = new ArrayList<>();
         for ( Map.Entry<String, List<DailyDingInfo>> entry : map.entrySet() ) {
             List<DailyDingInfo> value = entry.getValue();
@@ -420,11 +462,16 @@ public class MealSupportController {
     }
 
     //获取本月打卡信息
-    private Map<String, List<DailyDingInfo>> getDingInfo(String userId, String accessToken) {
+    private Map<String, List<DailyDingInfo>> getDingInfo(String userId, String accessToken, int year, int month) {
         Map<String, List<DailyDingInfo>> dailyDingInfoMap = new HashMap<>();
         //每次只能获取到7天数据
         DateTime today = DateTime.now();
-        int endDay = today.getDayOfMonth();
+        //说明不是本月的 是其他月份
+        if ( today.getYear() != year && today.getMonthOfYear() != month ) {
+            today = new DateTime(year, month, 1, 12, 0, 0);
+        }
+        //计算最后一天
+        int endDay = today.dayOfMonth().withMaximumValue().getDayOfMonth();
         int times = endDay / 7 + (endDay % 7 == 0 ? 0 : 1);
         DingTalkClient client = new DefaultDingTalkClient("https://oapi.dingtalk.com/attendance/list");
         for ( int i = 0; i < times; i++ ) {

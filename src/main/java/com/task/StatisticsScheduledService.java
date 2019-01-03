@@ -69,15 +69,10 @@ public class StatisticsScheduledService {
         }
     }
 
-    //每月最后一天晚上10点给相关人员发布信息
-    @Scheduled( cron = "0 0 22 28,29,30,31 * ? " )
+    //次月5号给相关人员发布信息
+    @Scheduled( cron = "0 0 10 5 * ? " )
     public void statistics() {
-        //获取当前月最后一天
-        DateTime now = DateTime.now();
-        //如果不是最后一天 不操作
-        if ( now.getDayOfMonth() != now.dayOfMonth().withMaximumValue().getDayOfMonth() ) {
-            return;
-        }
+        DateTime now = DateTime.now().minusMonths(1);
 
         String fileName = "followme_" + DateTime.now().toString("yyyyMMddHHmmsss") + ".xlsx";
         File file = new File(Constant.EXCEL_PATH);
@@ -215,7 +210,7 @@ public class StatisticsScheduledService {
             //mico@followme.cn  792075058@qq.com
             mailService.sendMail(userManager.getEmail(),
                     "万汇互联" + now.toString("yyyy年MM月") + "员工餐补统计",
-                    "尊敬的" + userManager.getUserName() + ":\n此邮件由打卡统计小程序自动生成，附件为"
+                    "尊敬的管理员：" + userManager.getUserName() + ":\n你好！\n此邮件由《FM小助手》小程序自动生成，附件为"
                             + "万汇互联" + now.toString("yyyy年MM月") + "员工餐补统计Excel表，请查收。如遇文件打不开请联系我再次获取！\n"
                             + DateTime.now().toString("yyyy-MM-dd HH:mm:ss" + "\n"),
                     Constant.EXCEL_PATH + File.separatorChar + fileName);
