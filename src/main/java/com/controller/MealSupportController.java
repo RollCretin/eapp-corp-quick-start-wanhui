@@ -77,10 +77,12 @@ public class MealSupportController {
      * @return
      */
     public ServiceResult<MealSupportResp> cancel(@RequestParam( value = "authCode" ) String authCode,
-                                                 @RequestParam( value = "year", defaultValue = "2018" ) int year,
-                                                 @RequestParam( value = "month", defaultValue = "12" ) int month,
+                                                 @RequestParam( value = "year", defaultValue = "-1" ) int year,
+                                                 @RequestParam( value = "month", defaultValue = "-1" ) int month,
                                                  @RequestParam( value = "day" ) int day,
                                                  HttpServletRequest request) {
+        if ( year == -1 || month == -1 )
+            return ServiceResult.failure("请先选择日期");
         String accessToken = AccessTokenUtil.getToken();
         String userId = AccessTokenUtil.getUserId(accessToken, request, authCode);
         if ( checkUserType(userId) ) {
@@ -129,8 +131,8 @@ public class MealSupportController {
         MealSupportResp resp = new MealSupportResp();
         resp.setList(respList);
         resp.setAllMoney(getAllMoney(respList));
-        resp.setDate(TimeUtils.formatInt(year) + "年" + TimeUtils.formatInt(month) + "月");
-        return ServiceResult.success(resp);
+        resp.setDate(TimeUtils.formatInt(year) + "-" + TimeUtils.formatInt(month));
+        return ServiceResult.success(resp, "取消成功");
     }
 
     private String getAllMoney(List<MealSupportChildResp> list) {
@@ -160,8 +162,8 @@ public class MealSupportController {
      */
     @RequestMapping( value = "/apply", method = RequestMethod.POST )
     public ServiceResult<MealSupportResp> applyOrCancel(@RequestParam( value = "authCode" ) String authCode,
-                                                        @RequestParam( value = "year", defaultValue = "2018" ) int year,
-                                                        @RequestParam( value = "month", defaultValue = "12" ) int month,
+                                                        @RequestParam( value = "year", defaultValue = "-1" ) int year,
+                                                        @RequestParam( value = "month", defaultValue = "-1" ) int month,
                                                         @RequestParam( value = "day" ) int day,
                                                         @RequestParam( value = "status" ) int status,
                                                         HttpServletRequest request) {
@@ -174,11 +176,6 @@ public class MealSupportController {
         }
     }
 
-//    @RequestMapping( value = "/apply", method = RequestMethod.POST )
-//    public ServiceResult historyList(){
-//
-//    }
-
     /**
      * 申请单个日期
      *
@@ -187,10 +184,12 @@ public class MealSupportController {
      * @return
      */
     public ServiceResult<MealSupportResp> apply(@RequestParam( value = "authCode" ) String authCode,
-                                                @RequestParam( value = "year", defaultValue = "2018" ) int year,
-                                                @RequestParam( value = "month", defaultValue = "12" ) int month,
+                                                @RequestParam( value = "year", defaultValue = "-1" ) int year,
+                                                @RequestParam( value = "month", defaultValue = "-1" ) int month,
                                                 @RequestParam( value = "day" ) int day,
                                                 HttpServletRequest request) {
+        if ( year == -1 || month == -1 )
+            return ServiceResult.failure("请先选择日期");
         String accessToken = AccessTokenUtil.getToken();
         String userId = AccessTokenUtil.getUserId(accessToken, request, authCode);
         if ( checkUserType(userId) ) {
@@ -240,8 +239,8 @@ public class MealSupportController {
         MealSupportResp resp = new MealSupportResp();
         resp.setList(respList);
         resp.setAllMoney(getAllMoney(respList));
-        resp.setDate(TimeUtils.formatInt(year) + "年" + TimeUtils.formatInt(month) + "月");
-        return ServiceResult.success(resp);
+        resp.setDate(TimeUtils.formatInt(year) + "-" + TimeUtils.formatInt(month));
+        return ServiceResult.success(resp, "申请成功");
     }
 
     /**
@@ -253,9 +252,11 @@ public class MealSupportController {
      */
     @RequestMapping( value = "/onekey/cancel", method = RequestMethod.POST )
     public ServiceResult<MealSupportResp> oneKeyCancel(@RequestParam( value = "authCode" ) String authCode,
-                                                       @RequestParam( value = "year", defaultValue = "2018" ) int year,
-                                                       @RequestParam( value = "month", defaultValue = "12" ) int month,
+                                                       @RequestParam( value = "year", defaultValue = "-1" ) int year,
+                                                       @RequestParam( value = "month", defaultValue = "-1" ) int month,
                                                        HttpServletRequest request) {
+        if ( year == -1 || month == -1 )
+            return ServiceResult.failure("请先选择日期");
         String accessToken = AccessTokenUtil.getToken();
         String userId = AccessTokenUtil.getUserId(accessToken, request, authCode);
         if ( checkUserType(userId) ) {
@@ -268,7 +269,7 @@ public class MealSupportController {
             return ServiceResult.failure("请求超时，请稍后再试");
         }
         //清除所有的数据
-        ServiceResult<MealSupportResp> availableData = getAvailableData(authCode, year, month, request);
+        ServiceResult<MealSupportResp> availableData = getAvailableData(authCode, year, month, "一键取消成功",request);
         return availableData;
     }
 
@@ -281,9 +282,11 @@ public class MealSupportController {
      */
     @RequestMapping( value = "/onekey/apply", method = RequestMethod.POST )
     public ServiceResult<MealSupportResp> oneKeyApply(@RequestParam( value = "authCode" ) String authCode,
-                                                      @RequestParam( value = "year", defaultValue = "2018" ) int year,
-                                                      @RequestParam( value = "month", defaultValue = "12" ) int month,
+                                                      @RequestParam( value = "year", defaultValue = "-1" ) int year,
+                                                      @RequestParam( value = "month", defaultValue = "-1" ) int month,
                                                       HttpServletRequest request) {
+        if ( year == -1 || month == -1 )
+            return ServiceResult.failure("请先选择日期");
         String accessToken = AccessTokenUtil.getToken();
         String userId = AccessTokenUtil.getUserId(accessToken, request, authCode);
         if ( checkUserType(userId) ) {
@@ -338,8 +341,12 @@ public class MealSupportController {
         MealSupportResp resp = new MealSupportResp();
         resp.setList(respList);
         resp.setAllMoney(getAllMoney(respList));
-        resp.setDate(TimeUtils.formatInt(year) + "年" + TimeUtils.formatInt(month) + "月");
-        return ServiceResult.success(resp);
+        resp.setDate(TimeUtils.formatInt(year) + "-" + TimeUtils.formatInt(month));
+        if ( respList.isEmpty() ) {
+            return ServiceResult.success(resp, "暂无可用数据");
+        } else {
+            return ServiceResult.success(resp, "一键申请成功");
+        }
     }
 
     /**
@@ -351,9 +358,17 @@ public class MealSupportController {
      */
     @RequestMapping( value = "/list", method = RequestMethod.POST )
     public ServiceResult<MealSupportResp> getAvailableData(@RequestParam( value = "authCode" ) String authCode,
-                                                           @RequestParam( value = "year", defaultValue = "2018" ) int year,
-                                                           @RequestParam( value = "month", defaultValue = "12" ) int month,
+                                                           @RequestParam( value = "year", defaultValue = "-1" ) int year,
+                                                           @RequestParam( value = "month", defaultValue = "-1" ) int month,
+                                                           String message,
                                                            HttpServletRequest request) {
+        if ( StringUtils.isEmpty(message) )
+            message = "";
+        if ( year == -1 || month == -1 ) {
+            DateTime now = DateTime.now();
+            year = now.getYear();
+            month = now.getMonthOfYear();
+        }
         MealSupportResp resp = new MealSupportResp();
         String accessToken = AccessTokenUtil.getToken();
         String userId = AccessTokenUtil.getUserId(accessToken, request, authCode);
@@ -403,9 +418,13 @@ public class MealSupportController {
         CommRequest.sort(respList);
 
         resp.setList(respList);
-        resp.setDate(TimeUtils.formatInt(year) + "年" + TimeUtils.formatInt(month) + "月");
+        resp.setDate(TimeUtils.formatInt(year) + "-" + TimeUtils.formatInt(month));
         resp.setAllMoney(getAllMoney(respList));
-        return ServiceResult.success(resp);
+        if ( respList.isEmpty() ) {
+            return ServiceResult.success(resp, "暂无可用数据");
+        } else {
+            return ServiceResult.success(resp, message);
+        }
     }
 
     private List<MealSupport> getMonthAvaiableData(String userId, String accessToken, int hour, int minute, int year, int month) {

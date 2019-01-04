@@ -25,7 +25,16 @@ public class ServiceResult<T> implements Serializable {
         item.success = true;
         item.result = result;
         item.code = "0";
-        item.message = "success";
+        item.message = "";
+        return item;
+    }
+
+    public static <T> ServiceResult<T> success(T result, String message) {
+        ServiceResult<T> item = new ServiceResult<T>();
+        item.success = true;
+        item.result = result;
+        item.code = "0";
+        item.message = message;
         return item;
     }
 
