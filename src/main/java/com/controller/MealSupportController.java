@@ -269,7 +269,7 @@ public class MealSupportController {
             return ServiceResult.failure("请求超时，请稍后再试");
         }
         //清除所有的数据
-        ServiceResult<MealSupportResp> availableData = getAvailableData(authCode, year, month, "一键取消成功",request);
+        ServiceResult<MealSupportResp> availableData = getAvailableData(authCode, year, month, "一键取消成功", request);
         return availableData;
     }
 
@@ -440,16 +440,17 @@ public class MealSupportController {
                         && dailyDingInfo2.getErrType() == 0 ) {
                     //没有异常
                     Date offDutyTime = getOffDutyTime(value);
+                    DateTime offBaseTime = getOffBaseTime(value);
                     if ( offDutyTime != null ) {
                         DateTime dateTime = new DateTime(offDutyTime);
-                        DateTime aimTime = new DateTime(dateTime.getYear(), dateTime.getMonthOfYear(), dateTime.getDayOfMonth(), hour, minute, 0);
+                        DateTime aimTime = new DateTime(offBaseTime.getYear(), offBaseTime.getMonthOfYear(), offBaseTime.getDayOfMonth(), hour, minute, 0);
                         if ( dateTime.isAfter(aimTime.getMillis()) ) {
                             //满足条件
                             MealSupport mealSupport = new MealSupport();
                             mealSupport.setAddTime(new Date());
-                            mealSupport.setDay(dateTime.getDayOfMonth());
-                            mealSupport.setMonth(dateTime.getMonthOfYear());
-                            mealSupport.setYear(dateTime.getYear());
+                            mealSupport.setDay(offBaseTime.getDayOfMonth());
+                            mealSupport.setMonth(offBaseTime.getMonthOfYear());
+                            mealSupport.setYear(offBaseTime.getYear());
                             mealSupport.setOffduty(new DateTime(getOffDutyTime(value)).toString(Constant.DATE_FORMAT));
                             mealSupport.setOnduty(new DateTime(getOnDutyTime(value)).toString(Constant.DATE_FORMAT));
                             mealSupport.setUserId(userId);
@@ -466,6 +467,15 @@ public class MealSupportController {
         for ( DailyDingInfo dailyDingInfo : value ) {
             if ( dailyDingInfo.getDingType().equals("OffDuty") ) {
                 return dailyDingInfo.getDingTime();
+            }
+        }
+        return null;
+    }
+
+    private DateTime getOffBaseTime(List<DailyDingInfo> value) {
+        for ( DailyDingInfo dailyDingInfo : value ) {
+            if ( dailyDingInfo.getDingType().equals("OffDuty") ) {
+                return new DateTime(dailyDingInfo.getBaseTime());
             }
         }
         return null;
@@ -539,14 +549,23 @@ public class MealSupportController {
     private Map<String, List<DailyDingInfo>> analyse(List<OapiAttendanceListResponse.Recordresult> recordresultList, Map<String, List<DailyDingInfo>> dailyDingInfoMap) {
         //将数据按天数添加到数组中
         for ( OapiAttendanceListResponse.Recordresult recordresult : recordresultList ) {
+            //打卡的时间点
             DateTime thisDay = new DateTime(recordresult.getUserCheckTime());
             DailyDingInfo dingInfo = new DailyDingInfo();
             dingInfo.setDingType(recordresult.getCheckType());
             dingInfo.setDingTime(recordresult.getUserCheckTime());
             dingInfo.setErrType(StringUtils.getErrType(recordresult.getTimeResult()));
+            dingInfo.setBaseTime(recordresult.getBaseCheckTime());
             dingInfo.setErrTypeDesc(recordresult.getTimeResult());
             //如果是工作日才需要操作
+            DateTime baseTime = new DateTime(recordresult.getBaseCheckTime());
+            DateTime todayMorning = new DateTime(baseTime.getYear(), baseTime.getMonthOfYear(), baseTime.getDayOfMonth(), 4, 0, 0);
+            DateTime todayEnd = todayMorning.plusDays(1);
             String key = thisDay.getYear() + "-" + TimeUtils.formatInt(thisDay.getMonthOfYear()) + "-" + TimeUtils.formatInt(thisDay.getDayOfMonth());
+            if ( thisDay.isBefore(todayEnd) && thisDay.isAfter(todayMorning) ) {
+                //也算今天的打卡时间
+                key = baseTime.getYear() + "-" + TimeUtils.formatInt(baseTime.getMonthOfYear()) + "-" + TimeUtils.formatInt(baseTime.getDayOfMonth());
+            }
             if ( dailyDingInfoMap.containsKey(key) ) {
                 List<DailyDingInfo> list = dailyDingInfoMap.get(key);
                 if ( !list.contains(dingInfo) )

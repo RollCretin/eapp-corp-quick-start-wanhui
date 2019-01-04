@@ -32,6 +32,16 @@ public class DailyDingInfo {
     private String errTypeDesc;
     //操作时间
     private Date dingTime;
+    //打卡基准点
+    private Date baseTime;
+
+    public Date getBaseTime() {
+        return baseTime;
+    }
+
+    public void setBaseTime(Date baseTime) {
+        this.baseTime = baseTime;
+    }
 
     public String getDingType() {
         return dingType;
