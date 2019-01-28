@@ -20,6 +20,6 @@ public class Constant {
     public static final String DATE_FORMAT = "yyyy/MM/dd HH:mm:ss";
 
     //存储excel的位置
-//    public static final String EXCEL_PATH = "/Users/cretin/Desktop/excel";
-    public static final String EXCEL_PATH = "/data/wwwroot/www.cretinzp.com/dingtalk/excel";
+    public static final String EXCEL_PATH = "/Users/cretin/Desktop/excel";
+//    public static final String EXCEL_PATH = "/data/wwwroot/www.cretinzp.com/dingtalk/excel";
 }

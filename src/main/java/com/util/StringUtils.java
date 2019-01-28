@@ -20,6 +20,7 @@ package com.util;
 public class StringUtils {
     /**
      * 判断是否为空
+     *
      * @param text
      * @return
      */
@@ -29,6 +30,19 @@ public class StringUtils {
         } else {
             return false;
         }
+    }
+
+    public static String getChineseErrType(int aimType) {
+        if ( aimType == 0 ) {
+            return "正常";
+        }
+        if ( aimType == 1 ) {
+            return "迟到或早退";
+        }
+        if ( aimType == 2 ) {
+            return "未打卡";
+        }
+        return "未知";
     }
 
     /**

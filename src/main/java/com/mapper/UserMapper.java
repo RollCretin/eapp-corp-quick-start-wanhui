@@ -48,8 +48,17 @@ public interface UserMapper {
 
     /**
      * 获取所有用户的id
+     *
      * @return
      */
     @Select( {"select id from t_user"} )
     List<String> getAllUserIds();
+
+    /**
+     * 获取所有用户信息
+     *
+     * @return
+     */
+    @Select( {"select * from t_user"} )
+    List<User> getAllUsers();
 }

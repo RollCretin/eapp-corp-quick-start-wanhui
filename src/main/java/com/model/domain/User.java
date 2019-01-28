@@ -2,7 +2,7 @@ package com.model.domain;
 
 public class User {
     private String id;
-    private String user_name;
+    private String userName;
     private String avatar;
     private String groupName;
 
@@ -14,12 +14,12 @@ public class User {
         this.id = id;
     }
 
-    public String getUser_name() {
-        return user_name;
+    public String getUserName() {
+        return userName;
     }
 
-    public void setUser_name(String user_name) {
-        this.user_name = user_name;
+    public void setUserName(String userName) {
+        this.userName = userName;
     }
 
     public String getAvatar() {

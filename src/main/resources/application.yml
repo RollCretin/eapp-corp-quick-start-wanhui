@@ -4,9 +4,9 @@ server:
 spring:
   datasource:
 #   ontest server line to online
-#    url: jdbc:mysql://39.106.4.197:3306/dingtalk?characterEncoding=UTF-8
-#    username: cretin_dingtalk
-#    password: MMAcGMXdg5sA4SxO
+    url: jdbc:mysql://39.106.4.197:3306/dingtalk?characterEncoding=UTF-8
+    username: cretin_dingtalk
+    password: MMAcGMXdg5sA4SxO
 #    driver-class-name: com.mysql.jdbc.Driver
 #    type: com.alibaba.druid.pool.DruidDataSource
 
@@ -17,9 +17,9 @@ spring:
 #    password:
 
 #    线上环境环境
-    url: jdbc:mysql://localhost:3306/dingtalk?characterEncoding=UTF-8
-    username: root
-    password: cretin
+#    url: jdbc:mysql://localhost:3306/dingtalk?characterEncoding=UTF-8
+#    username: root
+#    password: cretin
     driver-class-name: com.mysql.jdbc.Driver
     type: com.alibaba.druid.pool.DruidDataSource
   mail:
