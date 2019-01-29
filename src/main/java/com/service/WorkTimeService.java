@@ -11,12 +11,13 @@
 package com.service;
 
 import com.config.Constant;
+import com.config.DateBean;
+import com.config.DateConfig;
 import com.dingtalk.api.DefaultDingTalkClient;
 import com.dingtalk.api.DingTalkClient;
 import com.dingtalk.api.request.OapiAttendanceListRequest;
 import com.dingtalk.api.response.OapiAttendanceListResponse;
 import com.mapper.CommonMapper;
-import com.mapper.UserMapper;
 import com.model.DailyDingInfo;
 import com.model.domain.User;
 import com.model.domain.UserManager;
@@ -326,6 +327,7 @@ public class WorkTimeService {
     //获取本月打卡信息
     private Map<String, List<DailyDingInfo>> getDingInfo(String userId, String accessToken, int year, int month) {
         Map<String, List<DailyDingInfo>> dailyDingInfoMap = new HashMap<>();
+        DateBean dates = DateConfig.getDates(year + "" + (month < 10 ? "0" + month : month));
         //每次只能获取到7天数据
         DateTime today = DateTime.now();
         //说明不是本月的 是其他月份
@@ -337,13 +339,13 @@ public class WorkTimeService {
         int times = endDay / 7 + (endDay % 7 == 0 ? 0 : 1);
         DingTalkClient client = new DefaultDingTalkClient("https://oapi.dingtalk.com/attendance/list");
         for ( int i = 0; i < times; i++ ) {
-            dailyDingInfoMap = getDingInfoDetail(today.getYear(), today.getMonthOfYear(), endDay, i, 0, userId, accessToken, client, dailyDingInfoMap);
+            dailyDingInfoMap = getDingInfoDetail(today.getYear(), today.getMonthOfYear(), endDay, i, 0, userId, accessToken, client, dailyDingInfoMap, dates);
         }
         return dailyDingInfoMap;
     }
 
     //获取信息
-    private Map<String, List<DailyDingInfo>> getDingInfoDetail(int year, int month, int lastDay, int start, long offset, String userId, String accessToken, DingTalkClient client, Map<String, List<DailyDingInfo>> daikyList) {
+    private Map<String, List<DailyDingInfo>> getDingInfoDetail(int year, int month, int lastDay, int start, long offset, String userId, String accessToken, DingTalkClient client, Map<String, List<DailyDingInfo>> daikyList, DateBean dates) {
         Map<String, List<DailyDingInfo>> daikyListRes = daikyList;
         OapiAttendanceListRequest request = new OapiAttendanceListRequest();
         int d = start * 7 + 1;
@@ -366,11 +368,11 @@ public class WorkTimeService {
                 offset += recordresult.size();
                 if ( recordresult.size() < COMMON_PAGE_NUM ) {
                     //数据已结束
-                    daikyListRes = analyse(recordresult, daikyListRes);
+                    daikyListRes = analyse(recordresult, daikyListRes, dates);
                 } else {
                     //数据没有结束
-                    daikyListRes = analyse(recordresult, daikyListRes);
-                    daikyListRes = getDingInfoDetail(year, month, lastDay, start, offset, userId, accessToken, client, daikyListRes);
+                    daikyListRes = analyse(recordresult, daikyListRes, dates);
+                    daikyListRes = getDingInfoDetail(year, month, lastDay, start, offset, userId, accessToken, client, daikyListRes, dates);
                 }
             }
         } catch ( ApiException e ) {
@@ -379,9 +381,16 @@ public class WorkTimeService {
         return daikyListRes;
     }
 
-    private Map<String, List<DailyDingInfo>> analyse(List<OapiAttendanceListResponse.Recordresult> recordresultList, Map<String, List<DailyDingInfo>> dailyDingInfoMap) {
+    private Map<String, List<DailyDingInfo>> analyse(List<OapiAttendanceListResponse.Recordresult> recordresultList, Map<String, List<DailyDingInfo>> dailyDingInfoMap, DateBean dates) {
         //将数据按天数添加到数组中
+        HH:
         for ( OapiAttendanceListResponse.Recordresult recordresult : recordresultList ) {
+            //如果是工作日才需要操作
+            DateTime baseTime = new DateTime(recordresult.getBaseCheckTime());
+            if ( !dates.isInWork(baseTime.getDayOfMonth()) ) {
+                continue HH;
+            }
+
             //打卡的时间点
             DateTime thisDay = new DateTime(recordresult.getUserCheckTime());
             DailyDingInfo dingInfo = new DailyDingInfo();
@@ -390,8 +399,7 @@ public class WorkTimeService {
             dingInfo.setErrType(StringUtils.getErrType(recordresult.getTimeResult()));
             dingInfo.setBaseTime(recordresult.getBaseCheckTime());
             dingInfo.setErrTypeDesc(recordresult.getTimeResult());
-            //如果是工作日才需要操作
-            DateTime baseTime = new DateTime(recordresult.getBaseCheckTime());
+
             DateTime todayMorning = new DateTime(baseTime.getYear(), baseTime.getMonthOfYear(), baseTime.getDayOfMonth(), 4, 0, 0);
             DateTime todayEnd = todayMorning.plusDays(1);
             String key = thisDay.getYear() + "-" + TimeUtils.formatInt(thisDay.getMonthOfYear()) + "-" + TimeUtils.formatInt(thisDay.getDayOfMonth());
