@@ -7,8 +7,10 @@ import com.dingtalk.api.request.OapiGettokenRequest;
 import com.dingtalk.api.response.OapiDepartmentGetResponse;
 import com.dingtalk.api.response.OapiGettokenResponse;
 import com.dingtalk.api.response.OapiUserGetResponse;
+import com.mapper.AccessTokenMapper;
 import com.mapper.CommonMapper;
 import com.mapper.MealSupportMapper;
+import com.model.domain.AccessToken;
 import com.model.domain.AppConfig;
 import com.model.domain.MealSupport;
 import com.model.domain.UserManager;
@@ -49,6 +51,9 @@ public class StatisticsScheduledService {
     @Autowired
     private CommonMapper commonMapper;
 
+    @Autowired
+    private AccessTokenMapper accessTokenMapper;
+
     @Scheduled( cron = "0 0/10 * * * ?" )
     public void getAccessToken() {
         try {
@@ -63,6 +68,16 @@ public class StatisticsScheduledService {
             TokenInfoConfig.getInstance().setAccessToken(accessToken);
             Long expiresIn = response.getExpiresIn();
             TokenInfoConfig.getInstance().setLastExpiresTime(System.currentTimeMillis() - 60 + expiresIn / 2);
+
+            List<AccessToken> tokenList = accessTokenMapper.getTokenList();
+            if ( tokenList == null || tokenList.isEmpty() ) {
+                //没有
+                accessTokenMapper.insert(accessToken);
+            } else {
+                //有 取第一条
+                AccessToken accessToken1 = tokenList.get(0);
+                accessTokenMapper.update(accessToken, accessToken1.getId());
+            }
             System.out.println("我更新了一次token");
         } catch ( Exception e ) {
             e.printStackTrace();
@@ -84,12 +99,12 @@ public class StatisticsScheduledService {
                 commonMapper.getAllUserManager();
         if ( allUserManager == null || allUserManager.isEmpty() )
             return;
-        if(!aimFile.exists()){
+        if ( !aimFile.exists() ) {
             //获取配置
             AppConfig appConfig =
                     commonMapper.getAppConfig();
             ExcelData data = new ExcelData();
-            data.setName(now.getYear()+"年"+now.getMonthOfYear()+"月餐补申请统计");
+            data.setName(now.getYear() + "年" + now.getMonthOfYear() + "月餐补申请统计");
             List<String> titles = new ArrayList();
             titles.add("序号");
             titles.add("加班人姓名");
@@ -193,7 +208,7 @@ public class StatisticsScheduledService {
         }
 
         for ( UserManager userManager : allUserManager ) {
-            sendEmail(mailService,userManager, now, fileName, 5);
+            sendEmail(mailService, userManager, now, fileName, 5);
         }
     }
 
@@ -205,7 +220,7 @@ public class StatisticsScheduledService {
      * @param fileName
      * @param times
      */
-    public static void sendEmail(MailService mailService,UserManager userManager, DateTime now, String fileName, int times) {
+    public static void sendEmail(MailService mailService, UserManager userManager, DateTime now, String fileName, int times) {
         try {
             //mico@followme.cn  792075058@qq.com
             mailService.sendMail(userManager.getEmail(),
@@ -217,7 +232,7 @@ public class StatisticsScheduledService {
         } catch ( Exception e ) {
             times--;
             if ( times > 0 ) {
-                sendEmail(mailService,userManager, now, fileName, times);
+                sendEmail(mailService, userManager, now, fileName, times);
             }
             e.printStackTrace();
         }

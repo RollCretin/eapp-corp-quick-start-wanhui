@@ -263,13 +263,27 @@ public class MealSupportController {
             //是特殊用户
             return ServiceResult.failure("很抱歉，您所在的班制不支持在线申请餐补，详情请联系行政部门");
         }
+        return oneKeyCancelByUserId(userId, year, month, request);
+    }
+
+    @RequestMapping( value = "/onekey/cancel/userId", method = RequestMethod.POST )
+    public ServiceResult<MealSupportResp> oneKeyCancelByUserId(@RequestParam( value = "userId" ) String userId,
+                                                               @RequestParam( value = "year", defaultValue = "-1" ) int year,
+                                                               @RequestParam( value = "month", defaultValue = "-1" ) int month,
+                                                               HttpServletRequest request) {
+        if ( year == -1 || month == -1 )
+            return ServiceResult.failure("请先选择日期");
+        if ( checkUserType(userId) ) {
+            //是特殊用户
+            return ServiceResult.failure("很抱歉，您所在的班制不支持在线申请餐补，详情请联系行政部门");
+        }
         try {
             mealSupportMapper.deleteAll(userId, year, month);
         } catch ( Exception e ) {
             return ServiceResult.failure("请求超时，请稍后再试");
         }
         //清除所有的数据
-        ServiceResult<MealSupportResp> availableData = getAvailableData(authCode, year, month, "一键取消成功", request);
+        ServiceResult<MealSupportResp> availableData = getAvailableDataByUserId(userId, year, month, "一键取消成功", request);
         return availableData;
     }
 
@@ -289,6 +303,28 @@ public class MealSupportController {
             return ServiceResult.failure("请先选择日期");
         String accessToken = AccessTokenUtil.getToken();
         String userId = AccessTokenUtil.getUserId(accessToken, request, authCode);
+        if ( checkUserType(userId) ) {
+            //是特殊用户
+            return ServiceResult.failure("很抱歉，您所在的班制不支持在线申请餐补，详情请联系行政部门");
+        }
+        return oneKeyApplyByUserId(userId, year, month, request);
+    }
+
+    /**
+     * 一键申请
+     *
+     * @param userId
+     * @param request
+     * @return
+     */
+    @RequestMapping( value = "/onekey/apply/userId", method = RequestMethod.POST )
+    public ServiceResult<MealSupportResp> oneKeyApplyByUserId(@RequestParam( value = "userId" ) String userId,
+                                                              @RequestParam( value = "year", defaultValue = "-1" ) int year,
+                                                              @RequestParam( value = "month", defaultValue = "-1" ) int month,
+                                                              HttpServletRequest request) {
+        if ( year == -1 || month == -1 )
+            return ServiceResult.failure("请先选择日期");
+        String accessToken = AccessTokenUtil.getToken();
         if ( checkUserType(userId) ) {
             //是特殊用户
             return ServiceResult.failure("很抱歉，您所在的班制不支持在线申请餐补，详情请联系行政部门");
@@ -369,9 +405,26 @@ public class MealSupportController {
             year = now.getYear();
             month = now.getMonthOfYear();
         }
-        MealSupportResp resp = new MealSupportResp();
         String accessToken = AccessTokenUtil.getToken();
         String userId = AccessTokenUtil.getUserId(accessToken, request, authCode);
+        return getAvailableDataByUserId(userId, year, month, message, request);
+    }
+
+    @RequestMapping( value = "/list/userId", method = RequestMethod.POST )
+    public ServiceResult<MealSupportResp> getAvailableDataByUserId(@RequestParam( value = "userId" ) String userId,
+                                                                   @RequestParam( value = "year", defaultValue = "-1" ) int year,
+                                                                   @RequestParam( value = "month", defaultValue = "-1" ) int month,
+                                                                   String message,
+                                                                   HttpServletRequest request) {
+        if ( StringUtils.isEmpty(message) )
+            message = "";
+        if ( year == -1 || month == -1 ) {
+            DateTime now = DateTime.now();
+            year = now.getYear();
+            month = now.getMonthOfYear();
+        }
+        MealSupportResp resp = new MealSupportResp();
+        String accessToken = AccessTokenUtil.getToken();
         resp.setShowHistory(true);
         List<String> availableDate = new ArrayList<>();
         //说明是第一次进来
@@ -496,7 +549,7 @@ public class MealSupportController {
         //每次只能获取到7天数据
         DateTime today = DateTime.now();
         //说明不是本月的 是其他月份
-        if ( today.getYear() != year && today.getMonthOfYear() != month ) {
+        if ( today.getYear() != year || today.getMonthOfYear() != month ) {
             today = new DateTime(year, month, 1, 12, 0, 0);
         }
         //计算最后一天
