@@ -84,7 +84,7 @@
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>fastjson</artifactId>
-            <version>1.2.6</version>
+            <version>1.2.25</version>
         </dependency>
         <!--压缩：支持加密压缩-->
         <dependency>
