@@ -1,0 +1,53 @@
+server:
+  port: 8011
+
+spring:
+  datasource:
+#   ontest server line to online
+#    url: jdbc:mysql://39.106.213.78:3306/dingtalk?characterEncoding=UTF-8
+#    username: root
+#    password: cretin
+#    driver-class-name: com.mysql.jdbc.Driver
+#    type: com.alibaba.druid.pool.DruidDataSource
+
+
+#    测试环境
+#    url: jdbc:mysql://39.106.213.78:3306/dingtalk_test?characterEncoding=UTF-8
+#    username: root
+#    password: cretin
+
+#    线上环境环境
+    url: jdbc:mysql://localhost:3306/dingtalk?characterEncoding=UTF-8
+    username: root
+    password: cretin
+    driver-class-name: com.mysql.jdbc.Driver
+    type: com.alibaba.druid.pool.DruidDataSource
+  mail:
+#        host: smtp.qq.com
+        host: smtp.exmail.qq.com
+#        username: 792075058@qq.com
+        username: muxiannian@followme.cn
+#        password: mzsfuxlsvlzobedb
+        password: Cretin**29**
+        default-encoding: UTF-8
+        ssl:
+          trust: smtp.exmail.qq.com
+        properties:
+          mail:
+            smtp:
+              auth: true  #是否需要认证
+              socketFactory:
+                class: javax.net.ssl.SSLSocketFactory #SSL证书Socket工厂
+                port: 465 #587
+            debug: true
+
+mybatis:
+  type-aliases-package: com.model.domain
+  configuration:
+     #配置项：开启下划线到驼峰的自动转换. 作用：将数据库字段根据驼峰规则自动注入到对象属性。
+     map-underscore-to-camel-case: true
+
+logging:
+  level:
+   #打印SQL信息
+   com.hehe.mapper: debug

@@ -1,0 +1,10 @@
+# Created by .ignore support plugin (hsz.mobi)
+target/
+.idea/inspectionProfiles/
+src/main/resources/templates/
+target/eapp-corp-quick-start-1.6.1.jar
+target/eapp-corp-quick-start-1.6.1.jar.original
+target/generated-sources/
+target/generated-test-sources/
+.idea/
+
