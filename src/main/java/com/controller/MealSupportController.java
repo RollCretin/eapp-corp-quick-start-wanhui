@@ -42,6 +42,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.sql.Time;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -438,12 +440,29 @@ public class MealSupportController {
             today = today.minusMonths(1);
             availableDate.add(TimeUtils.formatInt(today.getYear()) + "-" + TimeUtils.formatInt(today.getMonthOfYear()));
         }
+        AppConfig appConfig = commonMapper.getAppConfig();
+        if ( appConfig != null ) {
+            //在这里判断下有没有需要额外配置的月份 用于配置可额外申请餐补的年月 yyyy-MM
+            if ( !StringUtils.isEmpty(appConfig.getAvaiableDate()) ) {
+                String[] items = appConfig.getAvaiableDate().split(" ");
+                for ( String item : items ) {
+                    String[] date = item.split("-");
+                    if ( date.length == 2 ) {
+                        int y = Integer.parseInt(date[0]);
+                        int d = Integer.parseInt(date[1]);
+                        String res = TimeUtils.formatInt(y) + "-" + TimeUtils.formatInt(d);
+                        if ( !availableDate.contains(res) ) {
+                            availableDate.add(res);
+                        }
+                    }
+                }
+            }
+        }
         resp.setAvailableDate(availableDate);
         if ( checkUserType(userId) ) {
             //是特殊用户
             return ServiceResult.failure("很抱歉，您所在的班制不支持在线申请餐补，详情请联系行政部门");
         }
-        AppConfig appConfig = commonMapper.getAppConfig();
         int hour = 21;
         int minute = 0;
         if ( appConfig != null ) {
@@ -469,6 +488,16 @@ public class MealSupportController {
             respList.add(mealSupportResp);
         }
         CommRequest.sort(respList);
+
+        Collections.sort(availableDate, (o1, o2) -> {
+            String[] s1 = o1.split("-");
+            String[] s2 = o2.split("-");
+            if ( Integer.parseInt(s1[0]) != Integer.parseInt(s2[0]) ) {
+                return -(Integer.parseInt(s1[0]) - Integer.parseInt(s2[0]));
+            } else {
+                return -(Integer.parseInt(s1[1]) - Integer.parseInt(s2[1]));
+            }
+        });
 
         resp.setList(respList);
         resp.setDate(TimeUtils.formatInt(year) + "-" + TimeUtils.formatInt(month));

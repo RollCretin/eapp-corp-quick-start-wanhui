@@ -29,6 +29,16 @@ public class AppConfig {
     private int miniute;
     //更新时间
     private Date updateTime;
+    //用于配置可额外申请餐补的年月 yyyy-MM
+    private String avaiableDate;
+
+    public String getAvaiableDate() {
+        return avaiableDate;
+    }
+
+    public void setAvaiableDate(String avaiableDate) {
+        this.avaiableDate = avaiableDate;
+    }
 
     public int getHour() {
         return hour;
