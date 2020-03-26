@@ -1,6 +1,8 @@
 package com;
 
+import com.config.Constant;
 import com.model.DateInfoModel;
+import com.service.MailService;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -9,6 +11,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -131,5 +134,13 @@ public class ApplicationTests {
             System.out.println("]");
             System.out.println("},");
         }
+    }
+
+    @Autowired
+    private MailService mailService;
+
+    @Test
+    public void sendEmail() {
+        mailService.sendMail("mxnzp_life@163.com","滴滴滴","sssss", Constant.EXCEL_PATH + File.separatorChar + "followme_201911201454011.xlsx");
     }
 }

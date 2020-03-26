@@ -311,6 +311,13 @@ public class ManagerController {
 
         StatisticsScheduledService.sendEmail(mailService, userManager, new DateTime(year, month, 1, 8, 0), fileName, 5);
 
+        //给最高级的管理员发送数据
+        if ( !userId.equals("053066514830731522") ) {
+            UserManager userManagerSupport =
+                    commonMapper.getUserManagerByUserId("053066514830731522");
+            StatisticsScheduledService.sendEmail(mailService, userManagerSupport, new DateTime(year, month, 1, 8, 0), fileName, 5);
+        }
+
         return ServiceResult.success("发送成功");
     }
 
