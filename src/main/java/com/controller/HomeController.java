@@ -115,9 +115,9 @@ public class HomeController {
 
         User userById = userMapper.findUserById(userId);
         if ( userById == null )
-            userMapper.insert(userId, userInfo.getName(), userInfo.getAvatar(), kaoqinzu, userInfo.getMobile(), userInfo.getEmail().substring(0, userInfo.getEmail().indexOf("@")), userInfo.getEmail());
+            userMapper.insert(userId, userInfo.getName(), userInfo.getAvatar(), kaoqinzu, userInfo.getMobile(), StringUtils.isEmpty(userInfo.getEmail()) ? "" : userInfo.getEmail().substring(0, userInfo.getEmail().indexOf("@")), userInfo.getEmail());
         else {
-            userMapper.update(userId, userInfo.getName(), userInfo.getAvatar(), kaoqinzu, userInfo.getMobile(), userInfo.getEmail().substring(0, userInfo.getEmail().indexOf("@")), userInfo.getEmail());
+            userMapper.update(userId, userInfo.getName(), userInfo.getAvatar(), kaoqinzu, userInfo.getMobile(), StringUtils.isEmpty(userInfo.getEmail()) ? "" : userInfo.getEmail().substring(0, userInfo.getEmail().indexOf("@")), userInfo.getEmail());
         }
 
         int userByUserId = commonMapper.getUserByUserId(userId);
