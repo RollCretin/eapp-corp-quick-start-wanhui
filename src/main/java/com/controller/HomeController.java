@@ -65,7 +65,7 @@ import static com.config.Constant.COMMON_PAGE_NUM;
  * @since 1.0.0
  */
 @RestController
-@RequestMapping( "/home" )
+@RequestMapping("/home")
 @ResponseBody
 public class HomeController {
     @Autowired
@@ -77,8 +77,8 @@ public class HomeController {
     @Autowired
     private CommonMapper commonMapper;
 
-    @RequestMapping( value = "/main", method = RequestMethod.POST )
-    public ServiceResult<HomeMainResp> getMainData(@RequestParam( value = "authCode" ) String authCode,
+    @RequestMapping(value = "/main", method = RequestMethod.POST)
+    public ServiceResult<HomeMainResp> getMainData(@RequestParam(value = "authCode") String authCode,
                                                    HttpServletRequest request) {
         HomeMainResp homeMainResp = new HomeMainResp();
         //今日打卡信息
@@ -91,7 +91,7 @@ public class HomeController {
         log(2, userId);
 
         OapiUserGetResponse userInfo = CommRequest.getUserInfo(accessToken, userId);
-        if ( userInfo != null && !StringUtils.isEmpty(userInfo.getAvatar()) ) {
+        if (userInfo != null && !StringUtils.isEmpty(userInfo.getAvatar())) {
             homeMainResp.setAvatar(userInfo.getAvatar());
         } else {
             //头像为空 设置默认头像
@@ -109,19 +109,21 @@ public class HomeController {
 
         //获取是否开启自动提醒功能
         Remind remindByUserId = remindMapper.findRemindByUserId(userId);
-        if ( remindByUserId != null ) {
+        if (remindByUserId != null) {
             homeMainResp.setWeekNotice(remindByUserId.getStatus() == 0 ? false : true);
         }
 
         User userById = userMapper.findUserById(userId);
-        if ( userById == null )
-            userMapper.insert(userId, userInfo.getName(), userInfo.getAvatar(), kaoqinzu, userInfo.getMobile(), StringUtils.isEmpty(userInfo.getEmail()) ? "" : userInfo.getEmail().substring(0, userInfo.getEmail().indexOf("@")), userInfo.getEmail());
-        else {
-            userMapper.update(userId, userInfo.getName(), userInfo.getAvatar(), kaoqinzu, userInfo.getMobile(), StringUtils.isEmpty(userInfo.getEmail()) ? "" : userInfo.getEmail().substring(0, userInfo.getEmail().indexOf("@")), userInfo.getEmail());
+        String email = userInfo.getEmail();
+        String usernameEn = StringUtils.isEmpty(email) ? "" : (email.contains("@") ? email.substring(0, email.indexOf("@")) : email);
+        if (userById == null) {
+            userMapper.insert(userId, userInfo.getName(), userInfo.getAvatar(), kaoqinzu, userInfo.getMobile(), usernameEn, userInfo.getEmail());
+        } else {
+            userMapper.update(userId, userInfo.getName(), userInfo.getAvatar(), kaoqinzu, userInfo.getMobile(), usernameEn, userInfo.getEmail());
         }
 
         int userByUserId = commonMapper.getUserByUserId(userId);
-        if ( userByUserId != 0 ) {
+        if (userByUserId != 0) {
             homeMainResp.setShowNoticeBtn(true);
         }
 
@@ -141,7 +143,7 @@ public class HomeController {
         int endDay = today.getDayOfMonth();
         int times = endDay / 7 + (endDay % 7 == 0 ? 0 : 1);
         DingTalkClient client = new DefaultDingTalkClient("https://oapi.dingtalk.com/attendance/list");
-        for ( int i = 0; i < times; i++ ) {
+        for (int i = 0; i < times; i++) {
             getDingInfoDetail(today.getYear(), today.getMonthOfYear(), endDay, i, 0, userId, accessToken, client, monthWorkDay, days, todayDingInfo);
         }
 
@@ -149,8 +151,8 @@ public class HomeController {
         List<UserMainInfoModel.DingModel> todayDing = new ArrayList<>();
 
         //组装今日打卡信息
-        if ( todayDingInfo != null && !todayDingInfo.isEmpty() ) {
-            for ( int i = 0; i < todayDingInfo.size(); i++ ) {
+        if (todayDingInfo != null && !todayDingInfo.isEmpty()) {
+            for (int i = 0; i < todayDingInfo.size(); i++) {
                 DailyDingInfo info = todayDingInfo.get(i);
                 int type = info.getDingType().equals("OnDuty") ? 0 : 1;
                 todayDing.add(new UserMainInfoModel.DingModel(info.getDingTime().getTime(), type, new DateTime(info.getDingTime()).toString(Constant.DATE_FORMAT) + " " + StringUtils.getDingTypeDesc(info.getDingType())));
@@ -167,11 +169,11 @@ public class HomeController {
         int lateTimes = 0;
         int errTimes = 0;
         //遍历map中的值
-        for ( Integer value : days.values() ) {
-            if ( value == 1 ) {
+        for (Integer value : days.values()) {
+            if (value == 1) {
                 //迟到 早退
                 lateTimes++;
-            } else if ( value == 2 ) {
+            } else if (value == 2) {
                 //漏卡 未打卡
                 errTimes++;
             }
@@ -188,7 +190,7 @@ public class HomeController {
         int d = start * 7 + 1;
         DateTime dateTime = new DateTime(year, month, d, 4, 0, 0);
         request.setWorkDateFrom(dateTime.toString("yyyy-MM-dd HH:mm:ss"));
-        if ( d + 7 <= lastDay ) {
+        if (d + 7 <= lastDay) {
             DateTime dateTimeNew = dateTime.plusDays(7);
             request.setWorkDateTo(dateTimeNew.toString("yyyy-MM-dd HH:mm:ss"));
         } else {
@@ -201,9 +203,9 @@ public class HomeController {
         try {
             OapiAttendanceListResponse response = client.execute(request, accessToken);
             List<OapiAttendanceListResponse.Recordresult> recordresult = response.getRecordresult();
-            if ( recordresult != null ) {
+            if (recordresult != null) {
                 offset += recordresult.size();
-                if ( recordresult.size() < COMMON_PAGE_NUM ) {
+                if (recordresult.size() < COMMON_PAGE_NUM) {
                     //数据已结束
                     analyse(recordresult, monthWorkDay, days, dingInfo);
                 } else {
@@ -212,19 +214,19 @@ public class HomeController {
                     getDingInfoDetail(year, month, lastDay, start, offset, userId, accessToken, client, monthWorkDay, days, dingInfo);
                 }
             }
-        } catch ( ApiException e ) {
+        } catch (ApiException e) {
             e.printStackTrace();
         }
     }
 
     private void analyse(List<OapiAttendanceListResponse.Recordresult> recordresultList, DateBean monthWorkDay, Map<Integer, Integer> days, List<DailyDingInfo> dingInfoList) {
         //将数据按天数添加到数组中
-        for ( OapiAttendanceListResponse.Recordresult recordresult : recordresultList ) {
+        for (OapiAttendanceListResponse.Recordresult recordresult : recordresultList) {
             DateTime thisDay = new DateTime(recordresult.getUserCheckTime());
             //如果是工作日才需要操作
-            if ( monthWorkDay.isInWork(recordresult.getUserCheckTime()) ) {
+            if (monthWorkDay.isInWork(recordresult.getUserCheckTime())) {
                 //是今天
-                if ( TimeUtils.isSameDay(new Date(), recordresult.getBaseCheckTime()) ) {
+                if (TimeUtils.isSameDay(new Date(), recordresult.getBaseCheckTime())) {
                     DailyDingInfo dingInfo = new DailyDingInfo();
                     dingInfo.setDingType(recordresult.getCheckType());
                     dingInfo.setDingTime(recordresult.getUserCheckTime());
@@ -233,38 +235,38 @@ public class HomeController {
                     String desc = StringUtils.getDingTypeDesc(recordresult.getCheckType()) + " " + new DateTime(recordresult.getUserCheckTime()).toString(Constant.DATE_FORMAT + " ")
                             + StringUtils.getErrDesc(dingInfo.getErrType());
                     dingInfo.setDesc(desc);
-                    if ( !dingInfoList.contains(dingInfo) )
+                    if (!dingInfoList.contains(dingInfo))
                         dingInfoList.add(dingInfo);
                 } else {
                     String timeResult = recordresult.getTimeResult();
-                    if ( "Normal".equals(timeResult) ) {
+                    if ("Normal".equals(timeResult)) {
                         //Normal：正常;
-                    } else if ( "Early".equals(timeResult) ) {
+                    } else if ("Early".equals(timeResult)) {
                         //Early：早退;
-                        if ( !days.containsKey(thisDay.getDayOfMonth()) ) {
+                        if (!days.containsKey(thisDay.getDayOfMonth())) {
                             days.put(thisDay.getDayOfMonth(), 1);
                         }
-                    } else if ( "Early".equals(timeResult) ) {
+                    } else if ("Early".equals(timeResult)) {
                         //Early：早退;
-                        if ( !days.containsKey(thisDay.getDayOfMonth()) ) {
+                        if (!days.containsKey(thisDay.getDayOfMonth())) {
                             days.put(thisDay.getDayOfMonth(), 1);
                         }
-                    } else if ( "Late".equals(timeResult) ) {
+                    } else if ("Late".equals(timeResult)) {
                         //Late：迟到;
-                        if ( !days.containsKey(thisDay.getDayOfMonth()) ) {
+                        if (!days.containsKey(thisDay.getDayOfMonth())) {
                             days.put(thisDay.getDayOfMonth(), 1);
                         }
-                    } else if ( "SeriousLate".equals(timeResult) ) {
+                    } else if ("SeriousLate".equals(timeResult)) {
                         //SeriousLate：严重迟到；
-                        if ( !days.containsKey(thisDay.getDayOfMonth()) ) {
+                        if (!days.containsKey(thisDay.getDayOfMonth())) {
                             days.put(thisDay.getDayOfMonth(), 1);
                         }
-                    } else if ( "Absenteeism".equals(timeResult) ) {
+                    } else if ("Absenteeism".equals(timeResult)) {
                         //Absenteeism：旷工迟到；
-                        if ( !days.containsKey(thisDay.getDayOfMonth()) ) {
+                        if (!days.containsKey(thisDay.getDayOfMonth())) {
                             days.put(thisDay.getDayOfMonth(), 1);
                         }
-                    } else if ( "NotSigned".equals(timeResult) ) {
+                    } else if ("NotSigned".equals(timeResult)) {
                         //NotSigned：未打卡
                         days.put(thisDay.getDayOfMonth(), 2);
                     }
