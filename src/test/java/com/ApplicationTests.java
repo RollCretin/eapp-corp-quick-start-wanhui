@@ -104,7 +104,7 @@ public class ApplicationTests {
     @Test
     public void contextLoads() {
         List<List<String>> map = new ArrayList<>();
-        DateInfoModel dateInfoModel = restTemplate.getForEntity("https://www.mxnzp.com/api/holiday/list/year/2020/workday", DateInfoModel.class).getBody();
+        DateInfoModel dateInfoModel = restTemplate.getForEntity("https://www.mxnzp.com/api/holiday/list/year/2021?app_id=nldmuckoppsvvtzv&app_secret=bTZ6QmhXa3ZxRmpIZTRNYTBjUlpPdz09", DateInfoModel.class).getBody();
         if ( dateInfoModel != null ) {
             for ( DateInfoModel.DataBean dataBean : dateInfoModel.getData() ) {
                 //取年份 月份
@@ -118,7 +118,7 @@ public class ApplicationTests {
         }
         for ( int i = 0; i < map.size(); i++ ) {
             System.out.println("{");
-            System.out.println("\"year\":\"" + 202000 + (i + 1) + "\",");
+            System.out.println("\"year\":\"" + (202100 + (i + 1)) + "\",");
             System.out.println("\"month\":[");
             List<String> strings = map.get(i);
             for ( int i1 = 0; i1 < strings.size(); i1++ ) {
