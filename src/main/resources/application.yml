@@ -17,7 +17,7 @@ spring:
 #    password: cretin
 
 #    线上环境环境
-    url: jdbc:mysql://localhost:3306/dingtalk?characterEncoding=UTF-8
+    url: jdbc:mysql://39.106.213.78:3306/dingtalk?characterEncoding=UTF-8
     username: root
     password: cretin
     driver-class-name: com.mysql.jdbc.Driver

@@ -27,6 +27,8 @@ public class AppConfig {
     private int hour;
     //设置算加班的时间点 分钟
     private int miniute;
+    //设置每天的上班时间 算上午休时间 单位分钟
+    private int minWorkTimeMinute;
     //更新时间
     private Date updateTime;
     //用于配置可额外申请餐补的年月 yyyy-MM
@@ -34,6 +36,14 @@ public class AppConfig {
 
     public String getAvaiableDate() {
         return avaiableDate;
+    }
+
+    public int getMinWorkTimeMinute() {
+        return minWorkTimeMinute;
+    }
+
+    public void setMinWorkTimeMinute(int minWorkTimeMinute) {
+        this.minWorkTimeMinute = minWorkTimeMinute;
     }
 
     public void setAvaiableDate(String avaiableDate) {

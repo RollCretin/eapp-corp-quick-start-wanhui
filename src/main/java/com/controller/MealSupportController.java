@@ -61,7 +61,7 @@ import static com.config.Constant.COMMON_PAGE_NUM;
  * @since 1.0.0
  */
 @RestController
-@RequestMapping( "/meal" )
+@RequestMapping("/meal")
 @ResponseBody
 public class MealSupportController {
     @Autowired
@@ -78,16 +78,16 @@ public class MealSupportController {
      * @param request
      * @return
      */
-    public ServiceResult<MealSupportResp> cancel(@RequestParam( value = "authCode" ) String authCode,
-                                                 @RequestParam( value = "year", defaultValue = "-1" ) int year,
-                                                 @RequestParam( value = "month", defaultValue = "-1" ) int month,
-                                                 @RequestParam( value = "day" ) int day,
+    public ServiceResult<MealSupportResp> cancel(@RequestParam(value = "authCode") String authCode,
+                                                 @RequestParam(value = "year", defaultValue = "-1") int year,
+                                                 @RequestParam(value = "month", defaultValue = "-1") int month,
+                                                 @RequestParam(value = "day") int day,
                                                  HttpServletRequest request) {
-        if ( year == -1 || month == -1 )
+        if (year == -1 || month == -1)
             return ServiceResult.failure("请先选择日期");
         String accessToken = AccessTokenUtil.getToken();
         String userId = AccessTokenUtil.getUserId(accessToken, request, authCode);
-        if ( checkUserType(userId) ) {
+        if (checkUserType(userId)) {
             //是特殊用户
             return ServiceResult.failure("很抱歉，您所在的班制不支持在线申请餐补，详情请联系行政部门");
         }
@@ -96,33 +96,35 @@ public class MealSupportController {
         AppConfig appConfig = commonMapper.getAppConfig();
         int hour = 21;
         int minute = 0;
-        if ( appConfig != null ) {
+        int minWorkMinute = 95 * 6;
+        if (appConfig != null) {
             hour = appConfig.getHour();
             minute = appConfig.getMiniute();
+            minWorkMinute = appConfig.getMinWorkTimeMinute();
         }
-        List<MealSupport> list = getMonthAvaiableData(userId, accessToken, hour, minute, year, month);
+        List<MealSupport> list = getMonthAvaiableData(userId, accessToken, hour, minute, year, month, minWorkMinute);
         //查询所有的数据
         List<MealSupport> mealSupports = mealSupportMapper.findMealSupport(userId, year, month);
         List<MealSupportChildResp> respList = new ArrayList<>();
-        for ( MealSupport mealSupport : list ) {
+        for (MealSupport mealSupport : list) {
             MealSupportChildResp mealSupportResp = new MealSupportChildResp();
             BeanUtils.copyProperties(mealSupport, mealSupportResp);
-            if ( mealSupports != null && !mealSupports.isEmpty() ) {
+            if (mealSupports != null && !mealSupports.isEmpty()) {
                 HH:
-                for ( MealSupport support : mealSupports ) {
-                    if ( support.getDay() == mealSupport.getDay() ) {
+                for (MealSupport support : mealSupports) {
+                    if (support.getDay() == mealSupport.getDay()) {
                         mealSupportResp.setStatus(1);
                         break HH;
                     }
                 }
             }
-            if ( mealSupport.getDay() == day ) {
+            if (mealSupport.getDay() == day) {
                 //是今天
-                if ( aimMealSupport != null ) {
+                if (aimMealSupport != null) {
                     try {
                         mealSupportMapper.deleteOneById(aimMealSupport.getId());
                         mealSupportResp.setStatus(0);
-                    } catch ( Exception e ) {
+                    } catch (Exception e) {
                         return ServiceResult.failure("请求超时，请稍后再试");
                     }
                 }
@@ -140,13 +142,13 @@ public class MealSupportController {
     private String getAllMoney(List<MealSupportChildResp> list) {
         AppConfig appConfig = commonMapper.getAppConfig();
         int money = 0;
-        for ( MealSupportChildResp mealSupportChildResp : list ) {
-            if ( appConfig == null ) {
+        for (MealSupportChildResp mealSupportChildResp : list) {
+            if (appConfig == null) {
                 mealSupportChildResp.setMoney(20);
             } else {
                 mealSupportChildResp.setMoney(appConfig.getMealMoney());
             }
-            if ( mealSupportChildResp.getStatus() == 1 ) {
+            if (mealSupportChildResp.getStatus() == 1) {
                 money += mealSupportChildResp.getMoney();
             }
         }
@@ -162,14 +164,14 @@ public class MealSupportController {
      * @param request
      * @return
      */
-    @RequestMapping( value = "/apply", method = RequestMethod.POST )
-    public ServiceResult<MealSupportResp> applyOrCancel(@RequestParam( value = "authCode" ) String authCode,
-                                                        @RequestParam( value = "year", defaultValue = "-1" ) int year,
-                                                        @RequestParam( value = "month", defaultValue = "-1" ) int month,
-                                                        @RequestParam( value = "day" ) int day,
-                                                        @RequestParam( value = "status" ) int status,
+    @RequestMapping(value = "/apply", method = RequestMethod.POST)
+    public ServiceResult<MealSupportResp> applyOrCancel(@RequestParam(value = "authCode") String authCode,
+                                                        @RequestParam(value = "year", defaultValue = "-1") int year,
+                                                        @RequestParam(value = "month", defaultValue = "-1") int month,
+                                                        @RequestParam(value = "day") int day,
+                                                        @RequestParam(value = "status") int status,
                                                         HttpServletRequest request) {
-        if ( status == 1 ) {
+        if (status == 1) {
             //申请
             return apply(authCode, year, month, day, request);
         } else {
@@ -185,16 +187,16 @@ public class MealSupportController {
      * @param request
      * @return
      */
-    public ServiceResult<MealSupportResp> apply(@RequestParam( value = "authCode" ) String authCode,
-                                                @RequestParam( value = "year", defaultValue = "-1" ) int year,
-                                                @RequestParam( value = "month", defaultValue = "-1" ) int month,
-                                                @RequestParam( value = "day" ) int day,
+    public ServiceResult<MealSupportResp> apply(@RequestParam(value = "authCode") String authCode,
+                                                @RequestParam(value = "year", defaultValue = "-1") int year,
+                                                @RequestParam(value = "month", defaultValue = "-1") int month,
+                                                @RequestParam(value = "day") int day,
                                                 HttpServletRequest request) {
-        if ( year == -1 || month == -1 )
+        if (year == -1 || month == -1)
             return ServiceResult.failure("请先选择日期");
         String accessToken = AccessTokenUtil.getToken();
         String userId = AccessTokenUtil.getUserId(accessToken, request, authCode);
-        if ( checkUserType(userId) ) {
+        if (checkUserType(userId)) {
             //是特殊用户
             return ServiceResult.failure("很抱歉，您所在的班制不支持在线申请餐补，详情请联系行政部门");
         }
@@ -202,35 +204,37 @@ public class MealSupportController {
         AppConfig appConfig = commonMapper.getAppConfig();
         int hour = 21;
         int minute = 0;
-        if ( appConfig != null ) {
+        int minWorkMinute = 95 * 6;
+        if (appConfig != null) {
             hour = appConfig.getHour();
             minute = appConfig.getMiniute();
+            minWorkMinute = appConfig.getMinWorkTimeMinute();
         }
-        List<MealSupport> list = getMonthAvaiableData(userId, accessToken, hour, minute, year, month);
+        List<MealSupport> list = getMonthAvaiableData(userId, accessToken, hour, minute, year, month, minWorkMinute);
         //查询所有的数据
         List<MealSupport> mealSupports = mealSupportMapper.findMealSupport(userId, year, month);
         List<MealSupportChildResp> respList = new ArrayList<>();
-        for ( MealSupport mealSupport : list ) {
+        for (MealSupport mealSupport : list) {
             MealSupportChildResp mealSupportResp = new MealSupportChildResp();
             BeanUtils.copyProperties(mealSupport, mealSupportResp);
-            if ( mealSupports != null && !mealSupports.isEmpty() ) {
+            if (mealSupports != null && !mealSupports.isEmpty()) {
                 HH:
-                for ( MealSupport support : mealSupports ) {
-                    if ( support.getDay() == mealSupport.getDay() ) {
+                for (MealSupport support : mealSupports) {
+                    if (support.getDay() == mealSupport.getDay()) {
                         mealSupportResp.setStatus(1);
                         break HH;
                     }
                 }
             }
-            if ( mealSupport.getDay() == day ) {
+            if (mealSupport.getDay() == day) {
                 //是今天
-                if ( aimMealSupport == null ) {
+                if (aimMealSupport == null) {
                     aimMealSupport = new MealSupport();
                     BeanUtils.copyProperties(mealSupport, aimMealSupport);
                     try {
                         mealSupportMapper.insertAll(Arrays.asList(aimMealSupport));
                         mealSupportResp.setStatus(1);
-                    } catch ( Exception e ) {
+                    } catch (Exception e) {
                         return ServiceResult.failure("请求超时，请稍后再试");
                     }
                 }
@@ -252,36 +256,36 @@ public class MealSupportController {
      * @param request
      * @return
      */
-    @RequestMapping( value = "/onekey/cancel", method = RequestMethod.POST )
-    public ServiceResult<MealSupportResp> oneKeyCancel(@RequestParam( value = "authCode" ) String authCode,
-                                                       @RequestParam( value = "year", defaultValue = "-1" ) int year,
-                                                       @RequestParam( value = "month", defaultValue = "-1" ) int month,
+    @RequestMapping(value = "/onekey/cancel", method = RequestMethod.POST)
+    public ServiceResult<MealSupportResp> oneKeyCancel(@RequestParam(value = "authCode") String authCode,
+                                                       @RequestParam(value = "year", defaultValue = "-1") int year,
+                                                       @RequestParam(value = "month", defaultValue = "-1") int month,
                                                        HttpServletRequest request) {
-        if ( year == -1 || month == -1 )
+        if (year == -1 || month == -1)
             return ServiceResult.failure("请先选择日期");
         String accessToken = AccessTokenUtil.getToken();
         String userId = AccessTokenUtil.getUserId(accessToken, request, authCode);
-        if ( checkUserType(userId) ) {
+        if (checkUserType(userId)) {
             //是特殊用户
             return ServiceResult.failure("很抱歉，您所在的班制不支持在线申请餐补，详情请联系行政部门");
         }
         return oneKeyCancelByUserId(userId, year, month, request);
     }
 
-    @RequestMapping( value = "/onekey/cancel/userId", method = RequestMethod.POST )
-    public ServiceResult<MealSupportResp> oneKeyCancelByUserId(@RequestParam( value = "userId" ) String userId,
-                                                               @RequestParam( value = "year", defaultValue = "-1" ) int year,
-                                                               @RequestParam( value = "month", defaultValue = "-1" ) int month,
+    @RequestMapping(value = "/onekey/cancel/userId", method = RequestMethod.POST)
+    public ServiceResult<MealSupportResp> oneKeyCancelByUserId(@RequestParam(value = "userId") String userId,
+                                                               @RequestParam(value = "year", defaultValue = "-1") int year,
+                                                               @RequestParam(value = "month", defaultValue = "-1") int month,
                                                                HttpServletRequest request) {
-        if ( year == -1 || month == -1 )
+        if (year == -1 || month == -1)
             return ServiceResult.failure("请先选择日期");
-        if ( checkUserType(userId) ) {
+        if (checkUserType(userId)) {
             //是特殊用户
             return ServiceResult.failure("很抱歉，您所在的班制不支持在线申请餐补，详情请联系行政部门");
         }
         try {
             mealSupportMapper.deleteAll(userId, year, month);
-        } catch ( Exception e ) {
+        } catch (Exception e) {
             return ServiceResult.failure("请求超时，请稍后再试");
         }
         //清除所有的数据
@@ -296,16 +300,16 @@ public class MealSupportController {
      * @param request
      * @return
      */
-    @RequestMapping( value = "/onekey/apply", method = RequestMethod.POST )
-    public ServiceResult<MealSupportResp> oneKeyApply(@RequestParam( value = "authCode" ) String authCode,
-                                                      @RequestParam( value = "year", defaultValue = "-1" ) int year,
-                                                      @RequestParam( value = "month", defaultValue = "-1" ) int month,
+    @RequestMapping(value = "/onekey/apply", method = RequestMethod.POST)
+    public ServiceResult<MealSupportResp> oneKeyApply(@RequestParam(value = "authCode") String authCode,
+                                                      @RequestParam(value = "year", defaultValue = "-1") int year,
+                                                      @RequestParam(value = "month", defaultValue = "-1") int month,
                                                       HttpServletRequest request) {
-        if ( year == -1 || month == -1 )
+        if (year == -1 || month == -1)
             return ServiceResult.failure("请先选择日期");
         String accessToken = AccessTokenUtil.getToken();
         String userId = AccessTokenUtil.getUserId(accessToken, request, authCode);
-        if ( checkUserType(userId) ) {
+        if (checkUserType(userId)) {
             //是特殊用户
             return ServiceResult.failure("很抱歉，您所在的班制不支持在线申请餐补，详情请联系行政部门");
         }
@@ -319,40 +323,42 @@ public class MealSupportController {
      * @param request
      * @return
      */
-    @RequestMapping( value = "/onekey/apply/userId", method = RequestMethod.POST )
-    public ServiceResult<MealSupportResp> oneKeyApplyByUserId(@RequestParam( value = "userId" ) String userId,
-                                                              @RequestParam( value = "year", defaultValue = "-1" ) int year,
-                                                              @RequestParam( value = "month", defaultValue = "-1" ) int month,
+    @RequestMapping(value = "/onekey/apply/userId", method = RequestMethod.POST)
+    public ServiceResult<MealSupportResp> oneKeyApplyByUserId(@RequestParam(value = "userId") String userId,
+                                                              @RequestParam(value = "year", defaultValue = "-1") int year,
+                                                              @RequestParam(value = "month", defaultValue = "-1") int month,
                                                               HttpServletRequest request) {
-        if ( year == -1 || month == -1 )
+        if (year == -1 || month == -1)
             return ServiceResult.failure("请先选择日期");
         String accessToken = AccessTokenUtil.getToken();
-        if ( checkUserType(userId) ) {
+        if (checkUserType(userId)) {
             //是特殊用户
             return ServiceResult.failure("很抱歉，您所在的班制不支持在线申请餐补，详情请联系行政部门");
         }
         AppConfig appConfig = commonMapper.getAppConfig();
         int hour = 21;
         int minute = 0;
-        if ( appConfig != null ) {
+        int minWorkMinute = 95 * 6;
+        if (appConfig != null) {
             hour = appConfig.getHour();
             minute = appConfig.getMiniute();
+            minWorkMinute = appConfig.getMinWorkTimeMinute();
         }
-        List<MealSupport> list = getMonthAvaiableData(userId, accessToken, hour, minute, year, month);
+        List<MealSupport> list = getMonthAvaiableData(userId, accessToken, hour, minute, year, month, minWorkMinute);
         //查询所有的数据
         List<MealSupport> mealSupports = mealSupportMapper.findMealSupport(userId, year, month);
         List<MealSupport> mealSupportResp = new ArrayList<>();
-        for ( MealSupport mealSupport : list ) {
-            if ( mealSupports != null && !mealSupports.isEmpty() ) {
+        for (MealSupport mealSupport : list) {
+            if (mealSupports != null && !mealSupports.isEmpty()) {
                 boolean has = false;
                 HH:
-                for ( MealSupport support : mealSupports ) {
-                    if ( support.getDay() == mealSupport.getDay() ) {
+                for (MealSupport support : mealSupports) {
+                    if (support.getDay() == mealSupport.getDay()) {
                         has = true;
                         break HH;
                     }
                 }
-                if ( !has ) {
+                if (!has) {
                     mealSupportResp.add(mealSupport);
                 }
             } else {
@@ -360,15 +366,15 @@ public class MealSupportController {
             }
         }
         try {
-            if ( !mealSupportResp.isEmpty() )
+            if (!mealSupportResp.isEmpty())
                 mealSupportMapper.insertAll(mealSupportResp);
             mealSupports = mealSupportMapper.findMealSupport(userId, year, month);
-        } catch ( Exception e ) {
+        } catch (Exception e) {
             return ServiceResult.failure("请求超时，请稍后再试");
         }
         List<MealSupportChildResp> respList = new ArrayList<>();
-        if ( mealSupports != null && !mealSupports.isEmpty() ) {
-            for ( MealSupport mealSupport : mealSupports ) {
+        if (mealSupports != null && !mealSupports.isEmpty()) {
+            for (MealSupport mealSupport : mealSupports) {
                 MealSupportChildResp mealSupportResp1 = new MealSupportChildResp();
                 BeanUtils.copyProperties(mealSupport, mealSupportResp1);
                 mealSupportResp1.setStatus(1);
@@ -380,7 +386,7 @@ public class MealSupportController {
         resp.setList(respList);
         resp.setAllMoney(getAllMoney(respList));
         resp.setDate(TimeUtils.formatInt(year) + "-" + TimeUtils.formatInt(month));
-        if ( respList.isEmpty() ) {
+        if (respList.isEmpty()) {
             return ServiceResult.success(resp, "暂无可用数据");
         } else {
             return ServiceResult.success(resp, "一键申请成功");
@@ -394,15 +400,15 @@ public class MealSupportController {
      * @param request
      * @return
      */
-    @RequestMapping( value = "/list", method = RequestMethod.POST )
-    public ServiceResult<MealSupportResp> getAvailableData(@RequestParam( value = "authCode" ) String authCode,
-                                                           @RequestParam( value = "year", defaultValue = "-1" ) int year,
-                                                           @RequestParam( value = "month", defaultValue = "-1" ) int month,
+    @RequestMapping(value = "/list", method = RequestMethod.POST)
+    public ServiceResult<MealSupportResp> getAvailableData(@RequestParam(value = "authCode") String authCode,
+                                                           @RequestParam(value = "year", defaultValue = "-1") int year,
+                                                           @RequestParam(value = "month", defaultValue = "-1") int month,
                                                            String message,
                                                            HttpServletRequest request) {
-        if ( StringUtils.isEmpty(message) )
+        if (StringUtils.isEmpty(message))
             message = "";
-        if ( year == -1 || month == -1 ) {
+        if (year == -1 || month == -1) {
             DateTime now = DateTime.now();
             year = now.getYear();
             month = now.getMonthOfYear();
@@ -412,15 +418,15 @@ public class MealSupportController {
         return getAvailableDataByUserId(userId, year, month, message, request);
     }
 
-    @RequestMapping( value = "/list/userId", method = RequestMethod.POST )
-    public ServiceResult<MealSupportResp> getAvailableDataByUserId(@RequestParam( value = "userId" ) String userId,
-                                                                   @RequestParam( value = "year", defaultValue = "-1" ) int year,
-                                                                   @RequestParam( value = "month", defaultValue = "-1" ) int month,
+    @RequestMapping(value = "/list/userId", method = RequestMethod.POST)
+    public ServiceResult<MealSupportResp> getAvailableDataByUserId(@RequestParam(value = "userId") String userId,
+                                                                   @RequestParam(value = "year", defaultValue = "-1") int year,
+                                                                   @RequestParam(value = "month", defaultValue = "-1") int month,
                                                                    String message,
                                                                    HttpServletRequest request) {
-        if ( StringUtils.isEmpty(message) )
+        if (StringUtils.isEmpty(message))
             message = "";
-        if ( year == -1 || month == -1 ) {
+        if (year == -1 || month == -1) {
             DateTime now = DateTime.now();
             year = now.getYear();
             month = now.getMonthOfYear();
@@ -431,7 +437,7 @@ public class MealSupportController {
         List<String> availableDate = new ArrayList<>();
         //说明是第一次进来
         DateTime today = DateTime.now();
-        if ( today.isAfter(new DateTime(today.getYear(), today.getMonthOfYear(), 5, 10, 0, 0)) ) {
+        if (today.isAfter(new DateTime(today.getYear(), today.getMonthOfYear(), 5, 10, 0, 0))) {
             //过了次月的5号上午10点 不能在申请了
             resp.setShowHistory(false);
             availableDate.add(TimeUtils.formatInt(today.getYear()) + "-" + TimeUtils.formatInt(today.getMonthOfYear()));
@@ -441,17 +447,17 @@ public class MealSupportController {
             availableDate.add(TimeUtils.formatInt(today.getYear()) + "-" + TimeUtils.formatInt(today.getMonthOfYear()));
         }
         AppConfig appConfig = commonMapper.getAppConfig();
-        if ( appConfig != null ) {
+        if (appConfig != null) {
             //在这里判断下有没有需要额外配置的月份 用于配置可额外申请餐补的年月 yyyy-MM
-            if ( !StringUtils.isEmpty(appConfig.getAvaiableDate()) ) {
+            if (!StringUtils.isEmpty(appConfig.getAvaiableDate())) {
                 String[] items = appConfig.getAvaiableDate().split(" ");
-                for ( String item : items ) {
+                for (String item : items) {
                     String[] date = item.split("-");
-                    if ( date.length == 2 ) {
+                    if (date.length == 2) {
                         int y = Integer.parseInt(date[0]);
                         int d = Integer.parseInt(date[1]);
                         String res = TimeUtils.formatInt(y) + "-" + TimeUtils.formatInt(d);
-                        if ( !availableDate.contains(res) ) {
+                        if (!availableDate.contains(res)) {
                             availableDate.add(res);
                         }
                     }
@@ -459,27 +465,29 @@ public class MealSupportController {
             }
         }
         resp.setAvailableDate(availableDate);
-        if ( checkUserType(userId) ) {
+        if (checkUserType(userId)) {
             //是特殊用户
             return ServiceResult.failure("很抱歉，您所在的班制不支持在线申请餐补，详情请联系行政部门");
         }
         int hour = 21;
         int minute = 0;
-        if ( appConfig != null ) {
+        int minWorkMinute = 95 * 6;
+        if (appConfig != null) {
             hour = appConfig.getHour();
             minute = appConfig.getMiniute();
+            minWorkMinute = appConfig.getMinWorkTimeMinute();
         }
-        List<MealSupport> list = getMonthAvaiableData(userId, accessToken, hour, minute, year, month);
+        List<MealSupport> list = getMonthAvaiableData(userId, accessToken, hour, minute, year, month, minWorkMinute);
         //查询所有的数据
         List<MealSupport> mealSupports = mealSupportMapper.findMealSupport(userId, year, month);
         List<MealSupportChildResp> respList = new ArrayList<>();
-        for ( MealSupport mealSupport : list ) {
+        for (MealSupport mealSupport : list) {
             MealSupportChildResp mealSupportResp = new MealSupportChildResp();
             BeanUtils.copyProperties(mealSupport, mealSupportResp);
-            if ( mealSupports != null && !mealSupports.isEmpty() ) {
+            if (mealSupports != null && !mealSupports.isEmpty()) {
                 HH:
-                for ( MealSupport support : mealSupports ) {
-                    if ( support.getDay() == mealSupport.getDay() ) {
+                for (MealSupport support : mealSupports) {
+                    if (support.getDay() == mealSupport.getDay()) {
                         mealSupportResp.setStatus(1);
                         break HH;
                     }
@@ -492,7 +500,7 @@ public class MealSupportController {
         Collections.sort(availableDate, (o1, o2) -> {
             String[] s1 = o1.split("-");
             String[] s2 = o2.split("-");
-            if ( Integer.parseInt(s1[0]) != Integer.parseInt(s2[0]) ) {
+            if (Integer.parseInt(s1[0]) != Integer.parseInt(s2[0])) {
                 return -(Integer.parseInt(s1[0]) - Integer.parseInt(s2[0]));
             } else {
                 return -(Integer.parseInt(s1[1]) - Integer.parseInt(s2[1]));
@@ -502,52 +510,57 @@ public class MealSupportController {
         resp.setList(respList);
         resp.setDate(TimeUtils.formatInt(year) + "-" + TimeUtils.formatInt(month));
         resp.setAllMoney(getAllMoney(respList));
-        if ( respList.isEmpty() ) {
+        if (respList.isEmpty()) {
             return ServiceResult.success(resp, "暂无可用数据");
         } else {
             return ServiceResult.success(resp, message);
         }
     }
 
-    private List<MealSupport> getMonthAvaiableData(String userId, String accessToken, int hour, int minute, int year, int month) {
+    private List<MealSupport> getMonthAvaiableData(String userId, String accessToken, int hour, int minute, int year, int month, int minWorkMinute) {
         //获取到本月的打卡信息
         Map<String, List<DailyDingInfo>> map = getDingInfo(userId, accessToken, year, month);
         List<MealSupport> list = new ArrayList<>();
-        for ( Map.Entry<String, List<DailyDingInfo>> entry : map.entrySet() ) {
+        for (Map.Entry<String, List<DailyDingInfo>> entry : map.entrySet()) {
             List<DailyDingInfo> value = entry.getValue();
-            if ( value != null && value.size() >= 2 ) {
+            if (value != null && value.size() >= 2) {
                 DailyDingInfo dailyDingInfo = value.get(0);
                 DailyDingInfo dailyDingInfo2 = value.get(1);
-                if ( dailyDingInfo.getErrType() == 0
-                        && dailyDingInfo2.getErrType() == 0 ) {
-                    //没有异常
-                    Date offDutyTime = getOffDutyTime(value);
-                    DateTime offBaseTime = getOffBaseTime(value);
-                    if ( offDutyTime != null ) {
-                        DateTime dateTime = new DateTime(offDutyTime);
-                        DateTime aimTime = new DateTime(offBaseTime.getYear(), offBaseTime.getMonthOfYear(), offBaseTime.getDayOfMonth(), hour, minute, 0);
-                        if ( dateTime.isAfter(aimTime.getMillis()) ) {
-                            //满足条件
-                            MealSupport mealSupport = new MealSupport();
-                            mealSupport.setAddTime(new Date());
-                            mealSupport.setDay(offBaseTime.getDayOfMonth());
-                            mealSupport.setMonth(offBaseTime.getMonthOfYear());
-                            mealSupport.setYear(offBaseTime.getYear());
-                            mealSupport.setOffduty(new DateTime(getOffDutyTime(value)).toString(Constant.DATE_FORMAT));
-                            mealSupport.setOnduty(new DateTime(getOnDutyTime(value)).toString(Constant.DATE_FORMAT));
-                            mealSupport.setUserId(userId);
-                            list.add(mealSupport);
-                        }
+                //这里需要判断打卡时间是否正常
+//                if ( dailyDingInfo.getErrType() == 0
+//                        && dailyDingInfo2.getErrType() == 0 ) {
+                //没有异常
+                Date offDutyTime = getOffDutyTime(value);
+                Date onDutyTime = getOnDutyTime(value);
+                DateTime offBaseTime = getOffBaseTime(value);
+                if (offDutyTime != null) {
+                    //晚上时间超过8:00
+                    DateTime dateTime = new DateTime(offDutyTime);
+                    DateTime aimTime = new DateTime(offBaseTime.getYear(), offBaseTime.getMonthOfYear(), offBaseTime.getDayOfMonth(), hour, minute, 0);
+                    //还需要每天上班时间必须达到8小时
+                    long workTime = offDutyTime.getTime() - onDutyTime.getTime();
+                    if (workTime > minWorkMinute * 60 * 1000 && dateTime.isAfter(aimTime.getMillis())) {
+                        //满足条件
+                        MealSupport mealSupport = new MealSupport();
+                        mealSupport.setAddTime(new Date());
+                        mealSupport.setDay(offBaseTime.getDayOfMonth());
+                        mealSupport.setMonth(offBaseTime.getMonthOfYear());
+                        mealSupport.setYear(offBaseTime.getYear());
+                        mealSupport.setOffduty(new DateTime(getOffDutyTime(value)).toString(Constant.DATE_FORMAT));
+                        mealSupport.setOnduty(new DateTime(getOnDutyTime(value)).toString(Constant.DATE_FORMAT));
+                        mealSupport.setUserId(userId);
+                        list.add(mealSupport);
                     }
                 }
+//                }
             }
         }
         return list;
     }
 
     private Date getOffDutyTime(List<DailyDingInfo> value) {
-        for ( DailyDingInfo dailyDingInfo : value ) {
-            if ( dailyDingInfo.getDingType().equals("OffDuty") ) {
+        for (DailyDingInfo dailyDingInfo : value) {
+            if (dailyDingInfo.getDingType().equals("OffDuty")) {
                 return dailyDingInfo.getDingTime();
             }
         }
@@ -555,8 +568,8 @@ public class MealSupportController {
     }
 
     private DateTime getOffBaseTime(List<DailyDingInfo> value) {
-        for ( DailyDingInfo dailyDingInfo : value ) {
-            if ( dailyDingInfo.getDingType().equals("OffDuty") ) {
+        for (DailyDingInfo dailyDingInfo : value) {
+            if (dailyDingInfo.getDingType().equals("OffDuty")) {
                 return new DateTime(dailyDingInfo.getBaseTime());
             }
         }
@@ -564,8 +577,8 @@ public class MealSupportController {
     }
 
     private Date getOnDutyTime(List<DailyDingInfo> value) {
-        for ( DailyDingInfo dailyDingInfo : value ) {
-            if ( dailyDingInfo.getDingType().equals("OnDuty") ) {
+        for (DailyDingInfo dailyDingInfo : value) {
+            if (dailyDingInfo.getDingType().equals("OnDuty")) {
                 return dailyDingInfo.getDingTime();
             }
         }
@@ -578,14 +591,14 @@ public class MealSupportController {
         //每次只能获取到7天数据
         DateTime today = DateTime.now();
         //说明不是本月的 是其他月份
-        if ( today.getYear() != year || today.getMonthOfYear() != month ) {
+        if (today.getYear() != year || today.getMonthOfYear() != month) {
             today = new DateTime(year, month, 1, 12, 0, 0);
         }
         //计算最后一天
         int endDay = today.dayOfMonth().withMaximumValue().getDayOfMonth();
         int times = endDay / 7 + (endDay % 7 == 0 ? 0 : 1);
         DingTalkClient client = new DefaultDingTalkClient("https://oapi.dingtalk.com/attendance/list");
-        for ( int i = 0; i < times; i++ ) {
+        for (int i = 0; i < times; i++) {
             dailyDingInfoMap = getDingInfoDetail(today.getYear(), today.getMonthOfYear(), endDay, i, 0, userId, accessToken, client, dailyDingInfoMap);
         }
         return dailyDingInfoMap;
@@ -598,7 +611,7 @@ public class MealSupportController {
         int d = start * 7 + 1;
         DateTime dateTime = new DateTime(year, month, d, 4, 0, 0);
         request.setWorkDateFrom(dateTime.toString("yyyy-MM-dd HH:mm:ss"));
-        if ( d + 7 <= lastDay ) {
+        if (d + 7 <= lastDay) {
             DateTime dateTimeNew = dateTime.plusDays(7);
             request.setWorkDateTo(dateTimeNew.toString("yyyy-MM-dd HH:mm:ss"));
         } else {
@@ -611,9 +624,9 @@ public class MealSupportController {
         try {
             OapiAttendanceListResponse response = client.execute(request, accessToken);
             List<OapiAttendanceListResponse.Recordresult> recordresult = response.getRecordresult();
-            if ( recordresult != null ) {
+            if (recordresult != null) {
                 offset += recordresult.size();
-                if ( recordresult.size() < COMMON_PAGE_NUM ) {
+                if (recordresult.size() < COMMON_PAGE_NUM) {
                     //数据已结束
                     daikyListRes = analyse(recordresult, daikyListRes);
                 } else {
@@ -622,7 +635,7 @@ public class MealSupportController {
                     daikyListRes = getDingInfoDetail(year, month, lastDay, start, offset, userId, accessToken, client, daikyListRes);
                 }
             }
-        } catch ( ApiException e ) {
+        } catch (ApiException e) {
             e.printStackTrace();
         }
         return daikyListRes;
@@ -630,7 +643,7 @@ public class MealSupportController {
 
     private Map<String, List<DailyDingInfo>> analyse(List<OapiAttendanceListResponse.Recordresult> recordresultList, Map<String, List<DailyDingInfo>> dailyDingInfoMap) {
         //将数据按天数添加到数组中
-        for ( OapiAttendanceListResponse.Recordresult recordresult : recordresultList ) {
+        for (OapiAttendanceListResponse.Recordresult recordresult : recordresultList) {
             //打卡的时间点
             DateTime thisDay = new DateTime(recordresult.getUserCheckTime());
             DailyDingInfo dingInfo = new DailyDingInfo();
@@ -644,17 +657,17 @@ public class MealSupportController {
             DateTime todayMorning = new DateTime(baseTime.getYear(), baseTime.getMonthOfYear(), baseTime.getDayOfMonth(), 4, 0, 0);
             DateTime todayEnd = todayMorning.plusDays(1);
             String key = thisDay.getYear() + "-" + TimeUtils.formatInt(thisDay.getMonthOfYear()) + "-" + TimeUtils.formatInt(thisDay.getDayOfMonth());
-            if ( thisDay.isBefore(todayEnd) && thisDay.isAfter(todayMorning) ) {
+            if (thisDay.isBefore(todayEnd) && thisDay.isAfter(todayMorning)) {
                 //也算今天的打卡时间
                 key = baseTime.getYear() + "-" + TimeUtils.formatInt(baseTime.getMonthOfYear()) + "-" + TimeUtils.formatInt(baseTime.getDayOfMonth());
             }
-            if ( dailyDingInfoMap.containsKey(key) ) {
+            if (dailyDingInfoMap.containsKey(key)) {
                 List<DailyDingInfo> list = dailyDingInfoMap.get(key);
-                if ( !list.contains(dingInfo) )
+                if (!list.contains(dingInfo))
                     list.add(dingInfo);
             } else {
                 List<DailyDingInfo> list = new ArrayList<>();
-                if ( !list.contains(dingInfo) )
+                if (!list.contains(dingInfo))
                     list.add(dingInfo);
                 dailyDingInfoMap.put(key, list);
             }
@@ -677,7 +690,7 @@ public class MealSupportController {
      */
     private boolean checkUserType(String userId) {
         int userInBlack = commonMapper.isUserInBlack(userId);
-        if ( userInBlack != 0 ) {
+        if (userInBlack != 0) {
             //在黑名单
             return true;
         } else {
